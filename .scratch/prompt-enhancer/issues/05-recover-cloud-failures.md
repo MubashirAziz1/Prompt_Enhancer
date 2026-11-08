@@ -2,11 +2,12 @@
 
 Type: task
 Status: ready-for-agent
+Execution: claimed
 Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 
 **What to build:** Keep the user's work intact when enhancement fails, explain the failure separately from an enhanced prompt, and let the user recover and retry.
 
-**Execution:** Implementation remains on hold until the user explicitly instructs it to begin. Ticket approval authorizes publication only.
+**Execution:** Implementation explicitly authorized by the user's implement request on 2026-11-08.
 
 - [ ] Invalid or missing credentials produce a distinct failure state with a path to Settings; a corrected credential can be used to retry.
 - [ ] Connectivity failures, timeouts, provider errors, and empty or unusable responses do not crash the application or erase the rough prompt.

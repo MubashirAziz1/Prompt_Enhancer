@@ -40,6 +40,7 @@ namespace PromptEnhancer.Tests
             string suite = args.Length == 0 ? "All" : args[0];
             var tests = new List<KeyValuePair<string, Action>>();
             if (suite == "All" || suite == "DesktopWorkflow") DesktopWorkflowTests.Register(tests);
+            if (suite == "All" || suite == "DesktopWorkflow" || suite == "CloudRecovery") CloudRecoveryWorkflowTests.Register(tests);
             if (suite == "All" || suite == "OpenRouter") OpenRouterTests.Register(tests);
             if (tests.Count == 0) { Console.Error.WriteLine("Unknown test suite."); return 1; }
             int failed = 0;

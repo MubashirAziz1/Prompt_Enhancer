@@ -99,6 +99,7 @@ namespace PromptEnhancer
             clear.Click += delegate {
                 roughPrompt.Clear();
                 enhancedPrompt.Clear();
+                enhance.Text = "Enhance";
                 status.Text = "Cleared. Ready for a new prompt.";
                 roughPrompt.Focus();
             };
@@ -197,6 +198,7 @@ namespace PromptEnhancer
         {
             if (String.IsNullOrWhiteSpace(roughPrompt.Text)) { status.Text = "Enter a rough prompt first."; return; }
             enhance.Enabled = settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = clear.Enabled = false;
+            enhance.Text = "Enhance";
             enhancedPrompt.Clear();
             status.Text = "Enhancing...";
             try
@@ -209,9 +211,9 @@ namespace PromptEnhancer
                     status.Text = "Enhanced prompt ready. Review, edit, then Copy.";
                 }
             }
-            catch (EnhancementException error) { if (!IsDisposed) status.Text = error.Message; }
-            catch (CredentialException error) { if (!IsDisposed) status.Text = error.Message; }
-            catch { if (!IsDisposed) status.Text = "Enhancement could not finish. Try again."; }
+            catch (EnhancementException error) { ShowFailure(error.Message); }
+            catch (CredentialException error) { ShowFailure(error.Message); }
+            catch { ShowFailure("Enhancement could not finish. Try again."); }
             finally
             {
                 if (!IsDisposed)
@@ -221,6 +223,13 @@ namespace PromptEnhancer
                     enhance.Enabled = true;
                 }
             }
+        }
+
+        private void ShowFailure(string message)
+        {
+            if (IsDisposed) return;
+            status.Text = "Enhancement failed. " + message;
+            enhance.Text = "Retry";
         }
     }
 }

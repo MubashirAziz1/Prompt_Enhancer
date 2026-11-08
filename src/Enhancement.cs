@@ -31,7 +31,7 @@ namespace PromptEnhancer
 
     public enum EnhancementFailure
     {
-        MissingCredential, Authentication, Credits, RateLimit, Unavailable, InvalidResponse
+        MissingCredential, Authentication, Credits, RateLimit, Unavailable, InvalidResponse, Timeout
     }
 
     // Only application-owned messages cross the provider boundary; never remote bodies or inner errors.
@@ -47,6 +47,7 @@ namespace PromptEnhancer
                 case EnhancementFailure.Authentication: return "The API key was rejected. Update it in Settings.";
                 case EnhancementFailure.Credits: return "The provider account needs credits.";
                 case EnhancementFailure.RateLimit: return "The provider is busy. Try again shortly.";
+                case EnhancementFailure.Timeout: return "The enhancement request timed out. Try again.";
                 case EnhancementFailure.InvalidResponse: return "The provider did not return a complete enhanced prompt. Try again.";
                 default: return "The enhancement service could not be reached. Try again.";
             }

@@ -30,6 +30,9 @@ namespace PromptEnhancer
         {
             string key = credentials.Load();
             if (String.IsNullOrWhiteSpace(key)) throw new EnhancementException(EnhancementFailure.MissingCredential);
+            foreach (char character in key)
+                if (Char.IsWhiteSpace(character) || Char.IsControl(character))
+                    throw new EnhancementException(EnhancementFailure.Authentication);
             try
             {
                 var payload = new ChatRequest {
@@ -73,7 +76,7 @@ namespace PromptEnhancer
             catch (OperationCanceledException)
             {
                 if (cancellation.IsCancellationRequested) throw new OperationCanceledException(cancellation);
-                throw new EnhancementException(EnhancementFailure.Unavailable);
+                throw new EnhancementException(EnhancementFailure.Timeout);
             }
             catch (SerializationException) { throw new EnhancementException(EnhancementFailure.InvalidResponse); }
             catch { throw new EnhancementException(EnhancementFailure.Unavailable); }

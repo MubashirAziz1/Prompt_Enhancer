@@ -1,4 +1,4 @@
-param([ValidateSet('All', 'DesktopWorkflow', 'OpenRouter')][string]$Only = 'All')
+param([ValidateSet('All', 'DesktopWorkflow', 'OpenRouter', 'CloudRecovery')][string]$Only = 'All')
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'build.ps1') -Tests
 $projectRoot = Split-Path -Parent $PSScriptRoot

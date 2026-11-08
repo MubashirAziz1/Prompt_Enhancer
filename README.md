@@ -1,6 +1,6 @@
 # Prompt Enhancer
 
-A native Windows application for rewriting rough English prompts. Tickets 01-04
+A native Windows application for rewriting rough English prompts. Tickets 01-05
 provide a draggable floating launcher, Settings, a rough-prompt editor, Enhance,
 an editable result, explicit Paste and Copy actions, and session controls.
 
@@ -41,6 +41,13 @@ the action. The key is reused after quitting
 and relaunching under the same Windows account. Saving a new key replaces it.
 The key field stays blank when reopened; blank Save/Cancel keeps the saved key.
 
+If enhancement fails, the rough prompt stays in the editor and the action becomes
+**Retry**. Failure feedback appears in the status area; the result stays empty
+and Copy is unavailable. For missing or rejected credentials, open **Settings**
+and save a corrected key. For a timeout, connectivity problem, or provider error,
+recover the connection/account or wait before retrying. You can edit the rough
+prompt first: **Retry** sends its current text using the current saved key.
+
 Only Enhance sends text to the cloud. Usage charges may apply to your OpenRouter
 account. Clipboard access happens only through explicit paste/copy actions;
 opening the app, typing, enhancing, and editing do not change the clipboard.
@@ -66,6 +73,7 @@ Run all checks, or one confirmed test boundary:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only DesktopWorkflow
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only OpenRouter
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only CloudRecovery
 ```
 
 Checks use the real Windows Forms controls and real DPAPI storage, with controlled
@@ -90,6 +98,12 @@ and relaunch: prompts start empty and the protected key still authenticates.
 Pending work is checked through Hide/Restore and Quit as well. Test-only UI
 Automation references come from the installed .NET Framework; no extra download
 is required.
+Recovery checks exercise missing, malformed, and rejected credentials through
+Settings, connectivity loss, an actual HttpClient timeout, provider errors,
+empty/malformed/truncated responses, and secret echoes. Every failure is followed
+by a successful retry with a revised rough prompt, checking input retention,
+safe feedback, and Copy availability. `CloudRecovery` selects these checks alone;
+they are also included in `DesktopWorkflow` and the full suite.
 The companion process is closed and the mouse position restored after checks.
 Run desktop checks on an unlocked interactive Windows desktop and leave mouse
 and keyboard idle while they run.
