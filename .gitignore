@@ -1,0 +1,4 @@
+build/
+.test-artifacts/
+*.user
+*.suo
