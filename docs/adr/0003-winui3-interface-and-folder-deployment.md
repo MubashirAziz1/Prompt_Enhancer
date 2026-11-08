@@ -1,6 +1,6 @@
 # Migrate the interface to WinUI 3 with self-contained folder deployment
 
-Status: accepted. Ticket 01 implementation explicitly authorized on 2026-11-08; ticket 02 remains on hold. Hold statements below record the earlier design stage.
+Status: accepted. Ticket 01 implemented and verified on 2026-11-08; ticket 02 remains on hold. Hold statements below record the earlier design stage.
 
 The user chose WinUI 3 to give Prompt Enhancer a modern native Fluent appearance
 while preserving its existing enhancement workflow and desktop behavior. Keep

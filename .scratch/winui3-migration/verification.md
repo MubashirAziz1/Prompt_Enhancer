@@ -84,3 +84,22 @@ is introduced.
 - Runtime launch in automated checks uses the WinUI test host with isolated
   credentials. The production composition root is not launched by automated
   checks, so they never open the production credential.
+
+## Standards review
+
+Independent review of `4c53375...dad121d`: no actionable findings.
+
+The diff follows the documented provider boundary, DPAPI credential storage,
+in-memory prompt lifecycle, domain terminology, local issue layout, and ticket 01
+scope. ADR 0003 explains the departure from ADR 0001's framework choice. Windows
+Forms remains the normal launch path; deployment and cutover remain deferred.
+No baseline code smell warrants a change request; small repeated test sequences
+remain readable in their individual scenarios.
+
+## Spec review
+
+Independent review of the same diff: no findings. Ticket 01 requirements appear
+implemented within the agreed scope. Ticket 02 behavior remains deferred, and
+verification limitations are documented.
+
+Standards: 0 actionable findings. Spec: 0 actionable findings.

@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 State: Consolidated shared understanding confirmed by the user.
-Execution: Ticket 01 explicitly authorized on 2026-11-08; ticket 02 remains on hold. Earlier publication-stage hold statements below are historical.
+Execution: Ticket 01 resolved on 2026-11-08; ticket 02 remains on hold. Earlier publication-stage hold statements below are historical. See verification.md.
 
 ## Problem Statement
 

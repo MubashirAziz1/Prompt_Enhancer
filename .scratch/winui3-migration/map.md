@@ -10,6 +10,14 @@
 
 ## Decisions so far
 
+- 2026-11-08: [Ticket 01](issues/01-migrate-enhancement-workflow-to-winui3.md)
+  is resolved and ready for human review. The independent WinUI migration editor
+  passes 26 checks; all 33 retained Windows Forms checks pass. Standards and spec
+  reviews found no actionable issues. [Verification](verification.md) records
+  build setup, credential compatibility, recovery, clipboard restoration, and
+  actual 150% display-scale conditions. Ticket 02 remains on hold, and Windows
+  Forms remains the normal application.
+
 - 2026-11-08: The user explicitly invoked implement for ticket 01. Ticket 01 is
   claimed, including its required stable build-tool installation. Ticket 02
   remains on hold; the normal Windows Forms launch path is retained. Earlier
