@@ -1,9 +1,8 @@
 # Prompt Enhancer
 
-A native Windows application for rewriting rough English prompts. Ticket 01
-provides Settings, a rough-prompt editor, Enhance, and a visible read-only result.
-Floating-widget controls, result editing/copying, and session controls belong to
-later tickets.
+A native Windows application for rewriting rough English prompts. Tickets 01-02
+provide Settings, a rough-prompt editor, Enhance, an editable result, and explicit
+Paste and Copy actions. Floating-widget and session controls belong to later tickets.
 
 Requires Windows 10/11 with .NET Framework 4.8 or later and Windows PowerShell 5.1.
 No package restore, Node/Python runtime, SDK, website, or installer is needed.
@@ -15,12 +14,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
 
 Open **Settings**, enter your OpenRouter API key, and select **Save**. Type or
-paste a rough prompt, then select **Enhance**. The key is reused after quitting
+paste a rough prompt (using **Paste** or Ctrl+V), then select **Enhance**. Review
+and edit the enhanced prompt, then select **Copy** to put the current edited
+result on the clipboard for pasting into another application. Copy is available
+for nonblank results while enhancement is idle. If the clipboard is busy, retry
+the action. The key is reused after quitting
 and relaunching under the same Windows account. Saving a new key replaces it.
 The key field stays blank when reopened; blank Save/Cancel keeps the saved key.
 
 Only Enhance sends text to the cloud. Usage charges may apply to your OpenRouter
-account. Nothing reads the clipboard automatically. Input and results exist only
+account. Clipboard access happens only through explicit paste/copy actions;
+opening the app, typing, enhancing, and editing do not change the clipboard.
+There is no clipboard monitoring or automatic copy. Input and results exist only
 in memory and are discarded on exit.
 
 The API key is stored as a Windows DPAPI `CurrentUser` encrypted blob at
@@ -48,7 +53,11 @@ HTTP responses and a non-sensitive test credential. A fresh child process verifi
 credential reuse after relaunch. A replacement integration exercises the unchanged
 desktop with the baseline enhancement policy. HTTP checks cover the exact submitted
 text, authentication, invalid/truncated responses, and safe errors. They do not
-evaluate live model quality. Test credentials use unique directories under
+evaluate live model quality. Desktop checks also exercise both the Paste button
+and actual Ctrl+V through Enhance, editing, and Copy, checking that the clipboard
+changes only on Copy and contains the edited result. These checks temporarily
+use the Windows clipboard and restore its original contents afterward.
+Test credentials use unique directories under
 `build\test-data` and are deleted after each check; the production credential path
 is never used. No external packages or test framework downloads are needed.
 

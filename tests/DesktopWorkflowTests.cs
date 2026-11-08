@@ -19,6 +19,77 @@ namespace PromptEnhancer.Tests
             tests.Add(new KeyValuePair<string, Action>("Settings -> Enhance -> relaunch reuses protected credential", SettingsToEnhancedPrompt));
             tests.Add(new KeyValuePair<string, Action>("A replacement provider drives the unchanged desktop workflow", ReplacementProvider));
             tests.Add(new KeyValuePair<string, Action>("A failed enhancement preserves the draft without showing a secret or stale result", SafeDesktopFailure));
+            tests.Add(new KeyValuePair<string, Action>("Paste -> Enhance -> edit -> Copy changes the clipboard only on Copy", () => PasteEnhanceEditCopy(false)));
+            tests.Add(new KeyValuePair<string, Action>("Keyboard paste -> Enhance -> edit -> Copy preserves clipboard control", () => PasteEnhanceEditCopy(true)));
+        }
+
+        private static void PasteEnhanceEditCopy(bool keyboardPaste)
+        {
+            string path = TestRunner.CreateCredentialPath();
+            IDataObject originalClipboard = Clipboard.GetDataObject();
+            try
+            {
+                Clipboard.SetText(TestRunner.RoughPrompt);
+                var credentials = new DpapiCredentialStore(path);
+                credentials.Save(TestRunner.TestKey);
+                var response = new TaskCompletionSource<HttpResponseMessage>();
+                using (var transport = new ControlledHttp { Respond = (request, cancellation) => response.Task })
+                using (var client = new HttpClient(transport))
+                using (var window = new MainForm(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+                {
+                    window.Show();
+                    Application.DoEvents();
+                    var input = TestRunner.Control<TextBox>(window, "RoughPrompt");
+                    var output = TestRunner.Control<TextBox>(window, "EnhancedPrompt");
+                    TestRunner.Require(input.Text == "" && output.Text == "" && Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "Opening the editor must not insert or overwrite clipboard text.");
+                    input.SelectedText = "typed draft";
+                    TestRunner.Require(input.Text == "typed draft" && Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "Typing must remain available without changing the clipboard.");
+                    input.SelectAll();
+                    if (keyboardPaste)
+                    {
+                        window.Activate();
+                        input.Focus();
+                        TestRunner.PumpUntil(() => input.Focused);
+                        SendKeys.SendWait("^v");
+                        Application.DoEvents();
+                    }
+                    else TestRunner.Control<Button>(window, "Paste").PerformClick();
+                    TestRunner.Require(input.Text == TestRunner.RoughPrompt && Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "Explicit Paste must insert clipboard text at the current selection without changing the clipboard.");
+                    var copy = TestRunner.Control<Button>(window, "Copy");
+                    TestRunner.Require(!copy.Enabled, "Copy must be unavailable before there is a result.");
+                    TestRunner.Control<Button>(window, "Enhance").PerformClick();
+                    TestRunner.Require(!copy.Enabled && !output.Enabled && Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "Waiting for enhancement must not expose an unfinished result or change the clipboard.");
+                    response.SetResult(TestRunner.Completion(TestRunner.EnhancedPrompt));
+                    TestRunner.PumpUntil(() => TestRunner.Control<Button>(window, "Enhance").Enabled);
+                    TestRunner.Require(output.Text == TestRunner.EnhancedPrompt && output.Enabled && !output.ReadOnly && copy.Enabled &&
+                        Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "The enhanced prompt must be editable and ready for explicit Copy without automatic copying.");
+                    const string reviewed = "Write a short email to my manager.\r\nRequest leave tomorrow for a personal appointment.\r\nUse a polite tone \u2014 thank you.";
+                    output.SelectAll();
+                    output.SelectedText = reviewed;
+                    TestRunner.Require(output.Text == reviewed && Clipboard.GetText() == TestRunner.RoughPrompt,
+                        "Review edits must remain in the editor until Copy is selected.");
+                    copy.PerformClick();
+                    TestRunner.Require(Clipboard.GetText() == reviewed,
+                        "Copy must write the current edited result, preserving line breaks and Unicode.");
+                    output.Clear();
+                    TestRunner.Require(!copy.Enabled && Clipboard.GetText() == reviewed,
+                        "Clearing the result must disable Copy without clearing the clipboard.");
+                    output.SelectedText = "   ";
+                    TestRunner.Require(!copy.Enabled, "Whitespace-only results must not enable Copy.");
+                    window.Close();
+                }
+            }
+            finally
+            {
+                if (originalClipboard == null) Clipboard.Clear();
+                else Clipboard.SetDataObject(originalClipboard, true, 10, 100);
+                Directory.Delete(Path.GetDirectoryName(path), true);
+            }
         }
 
         private static void SafeDesktopFailure()
@@ -41,6 +112,7 @@ namespace PromptEnhancer.Tests
                     TestRunner.Control<Button>(window, "Enhance").PerformClick();
                     TestRunner.PumpUntil(() => TestRunner.Control<Button>(window, "Enhance").Enabled);
                     TestRunner.Require(TestRunner.Control<TextBox>(window, "EnhancedPrompt").Text == "" &&
+                        !TestRunner.Control<Button>(window, "Copy").Enabled &&
                         !TestRunner.Control<Label>(window, "Status").Text.Contains(TestRunner.TestKey) &&
                         TestRunner.Control<Label>(window, "Status").Text.Contains("API key was rejected"),
                         "A failure must show a safe message and remove a stale successful result.");

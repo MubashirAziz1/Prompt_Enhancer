@@ -2,11 +2,12 @@
 
 Type: task
 Status: ready-for-agent
+Execution: claimed
 Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 
 **What to build:** Let the user paste a rough prompt, request enhancement, review and edit the enhanced prompt, then explicitly copy the reviewed result into another application.
 
-**Execution:** Implementation remains on hold until the user explicitly instructs it to begin. Ticket approval authorizes publication only.
+**Execution:** Implementation explicitly authorized by the user's implement request on 2026-11-08.
 
 - [ ] Explicit paste, including normal user-initiated keyboard paste, inserts clipboard text into the rough-prompt editor; typing and editing remain available.
 - [ ] The user can review and edit the enhanced prompt before copying it.
