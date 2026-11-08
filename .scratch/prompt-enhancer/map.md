@@ -37,7 +37,7 @@
 - Ticket 02 is resolved and ready for human acceptance. All 14 controlled checks passed with warnings treated as errors, including both paste paths through enhancement, editing, and Copy. The [ticket 02 review](review-edit-copy-review.md) reports zero Standards findings and zero Spec findings.
 - The user explicitly authorized [ticket 03](issues/03-draggable-floating-widget.md) on 2026-11-08. Commit `162dab8` adds a draggable topmost launcher around the existing topmost editor; closing or minimizing the editor returns to the launcher. All 14 existing checks pass, including the completion-order fix that restores Copy before enabling Enhance.
 - The user confirmed the DesktopWorkflow test seam and review baseline for ticket 03. All 16 checks now pass. New native Windows checks verify launcher and editor dragging, normal text interaction, controlled enhancement, collapse/reopen, and actual stacking above an active companion editor in a separate process. The tests exposed and drove a fix for minimize/reopen state and size restoration.
-- Ticket 03 Windows acceptance is complete and execution remains claimed pending final independent review. The [ticket 03 implementation review](draggable-widget-review.md) is being refreshed; ticket 04 remains blocked until 03 is resolved.
+- Ticket 03 is resolved and ready for human acceptance. Commit `61d0331` completes Windows acceptance and fixes minimize/reopen state and size restoration. The final [ticket 03 implementation review](draggable-widget-review.md) reports zero Standards findings and zero Spec findings. Ticket 04 is unblocked; its implementation still requires its own user authorization.
 
 ## Approved tickets
 
@@ -66,4 +66,4 @@
 - Consolidated spec is in spec.md; shared understanding confirmed by the user.
 - At interview completion, the user requested no action on the spec. The later implement request supplied the instruction to begin ticket 01.
 
-Interview complete. Later implement requests authorized tickets 01-03. Tickets 01 and 02 are complete; ticket 03 implementation and Windows acceptance are complete and await final review. Other tickets retain their own scope and prerequisites.
+Interview complete. Later implement requests authorized tickets 01-03; all three are complete. Other tickets retain their own scope and prerequisites.

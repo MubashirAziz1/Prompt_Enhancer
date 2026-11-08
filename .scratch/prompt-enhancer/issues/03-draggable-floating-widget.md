@@ -1,8 +1,8 @@
 # 03: Use a draggable floating widget
 
 Type: task
-Status: ready-for-agent
-Execution: claimed
+Status: ready-for-human
+Execution: resolved
 Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 
 **What to build:** Make the existing enhancement workflow available from a small floating button that expands into a movable editor and stays available over another Windows application.
@@ -23,7 +23,8 @@ Session retention, Hide, Clear, and Quit are delivered in ticket 04. This ticket
 
 ## Answer
 
-Implementation committed on 2026-11-08 in `162dab8`. A topmost launcher opens
+Implemented on 2026-11-08 in `162dab8`, with Windows verification and the
+minimize/reopen fix in `61d0331`. A topmost launcher opens
 the existing topmost editor. Dragging the launcher uses the Windows drag
 threshold and suppresses expansion after a drag. The editor keeps its native
 title-bar dragging, so text fields and controls retain their normal behavior.
@@ -50,6 +51,7 @@ usage were used.
 
 The prior interactive Computer Use helper failure was bypassed by the native
 Windows acceptance tests at the confirmed seam. Windows widget acceptance is
-complete; execution remains claimed pending the final independent review.
-The [implementation review](../draggable-widget-review.md) will record that
-review against the confirmed baseline `e002829`.
+complete. The final [implementation review](../draggable-widget-review.md)
+against confirmed baseline `e002829` reports zero Standards findings and zero
+Spec findings. Execution is resolved and triage is ready for human acceptance,
+unblocking ticket 04. Run and check commands are in [README](../../../README.md).
