@@ -3,7 +3,7 @@
 ## Notes
 
 - The user requested the grill-with-docs interview workflow, combining grilling and domain modeling.
-- The repository currently contains agent instructions and domain documentation conventions; no application code was found at the root.
+- The initial repository contained agent instructions and domain documentation only. Ticket 01 now supplies the Windows Forms application and its controlled workflow/HTTP checks.
 
 ## Decisions so far
 
@@ -27,7 +27,12 @@
 - Keep the current input and result while minimized or hidden. Clear removes them; Quit discards session content and exits. Closing the expanded editor returns to the button.
 - Canonical terms are recorded in the root GLOSSARY.md.
 - The current to-spec review draft is in spec-review.md. At the user's request, the later deployment phase and user stories 35-40 were removed; website, installer, and public deployment work are excluded from the ticket breakdown.
-- The user approved six vertical-slice tickets. They are published individually under issues/ with ready-for-agent triage status; the implementation hold remains in effect.
+- At ticket publication, the user had approved six vertical-slice tickets with ready-for-agent triage status; implementation was then on hold. The later ticket 01 implement request superseded that hold for ticket 01.
+- The user explicitly authorized [ticket 01](issues/01-enhance-through-openrouter.md) on 2026-11-08 and confirmed the desktop/HTTP test boundaries and review baseline `435da2d`.
+- Ticket 01 is implemented: native Windows Forms on .NET Framework 4.8, DPAPI `CurrentUser` encrypted credential storage, and the initial OpenRouter model `openai/gpt-4.1-mini`. [ADR 0001](../../docs/adr/0001-windows-desktop-and-provider-boundary.md) records the decision; [README](../../README.md) records run/check commands.
+- Compilation with warnings treated as errors and all 12 controlled checks passed, including Settings-to-result, real DPAPI, a fresh-process relaunch, and a replacement provider. No live OpenRouter request was made; model-quality evaluation remains ticket 06.
+- Triage retains the five default labels. Implementation lifecycle uses `Execution: claimed/resolved`, separate from `Status:`. Ticket 01 is resolved and ready for human acceptance, unblocking its dependent tickets.
+- The [ticket 01 implementation review](implementation-review.md) has no outstanding Standards or Spec findings; one documentation clarity finding was corrected.
 
 ## Approved tickets
 
@@ -43,7 +48,7 @@
 ## Fog
 
 - None for shared product understanding; the user confirmed the consolidated spec accurately captures their intent.
-- Technical implementation choices, including initial OpenRouter model, remain for implementation planning.
+- Initial technical choices are recorded in ADR 0001. Representative live model quality/latency/cost evaluation remains ticket 06.
 - Success examples, failure handling, distribution, and first-version boundaries.
 
 ## Design tree
@@ -54,6 +59,6 @@
 - Fourth round settled: essential additions remain allowed, no clarification questions, provider extensibility required, floating button expands to editor.
 - Final product round settled: OpenRouter first, Windows credential protection, explicit clipboard actions, session-only draft retention with Clear and Quit.
 - Consolidated spec is in spec.md; shared understanding confirmed by the user.
-- User explicitly requested no action on the spec. Implementation is on hold until further instruction.
+- At interview completion, the user requested no action on the spec. The later implement request supplied the instruction to begin ticket 01.
 
-Interview complete. User explicitly requested no action on the confirmed spec. Do not begin implementation until further instruction.
+Interview complete. The later implement request authorized ticket 01; its implementation is complete. Other tickets retain their own scope and prerequisites.

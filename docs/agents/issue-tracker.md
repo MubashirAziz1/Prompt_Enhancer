@@ -16,10 +16,12 @@ within the relevant feature.
 - Store each effort's Notes, Decisions so far, and Fog in `.scratch/<effort>/map.md`.
 - Store each child ticket in `issues/<NN>-<slug>.md` under the effort directory.
   Put the question in the body and set `Type:` to `research`, `prototype`,
-  `grilling`, or `task`.
+  `grilling`, or `task`. Keep `Status:` for the five triage labels; track
+  implementation lifecycle separately in `Execution:`.
 - List prerequisites near the top as `Blocked by: NN, NN`. The ticket becomes
-  unblocked when every listed ticket has `Status: resolved`.
+  unblocked when every listed ticket has `Execution: resolved`.
 - Take the lowest-numbered open, unblocked, unclaimed ticket. Save
-  `Status: claimed` before starting work.
+  `Execution: claimed` before starting work.
 - To resolve a ticket, append the result under `## Answer`, set
-  `Status: resolved`, and add a short summary and link to Decisions so far.
+  `Execution: resolved` and `Status: ready-for-human`, and add a short summary
+  and link to Decisions so far.
