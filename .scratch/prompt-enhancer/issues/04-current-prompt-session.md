@@ -2,11 +2,12 @@
 
 Type: task
 Status: ready-for-agent
+Execution: claimed
 Blocked by: 03 (Use a draggable floating widget)
 
 **What to build:** Let the user temporarily reduce or hide the widget without losing the current rough prompt and enhanced prompt, clear the current task, or quit without retaining prompt history.
 
-**Execution:** Implementation remains on hold until the user explicitly instructs it to begin. Ticket approval authorizes publication only.
+**Execution:** Implementation explicitly authorized by the user's implement request on 2026-11-08.
 
 - [ ] Minimizing or closing the expanded editor preserves the current rough prompt and enhanced prompt when the editor is reopened.
 - [ ] Hide removes the floating UI from the screen while retaining session contents; an explicit user-accessible action restores the widget with those contents.

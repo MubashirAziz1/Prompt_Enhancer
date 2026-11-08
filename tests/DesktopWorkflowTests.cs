@@ -24,6 +24,216 @@ namespace PromptEnhancer.Tests
             tests.Add(new KeyValuePair<string, Action>("Keyboard paste -> Enhance -> edit -> Copy preserves clipboard control", () => PasteEnhanceEditCopy(true)));
             tests.Add(new KeyValuePair<string, Action>("Floating launcher -> Enhance -> close/minimize -> launcher -> exit", FloatingWidgetWorkflow));
             tests.Add(new KeyValuePair<string, Action>("Floating workflow stays above another active editor while dragging, typing, and enhancing", FloatingWidgetMouse));
+            tests.Add(new KeyValuePair<string, Action>("Clear removes both prompts and allows enhancement with the saved credential", ClearSession));
+            tests.Add(new KeyValuePair<string, Action>("Hide from editor or launcher -> restore preserves reviewed prompts", HideRestoreSession));
+            tests.Add(new KeyValuePair<string, Action>("Quit -> fresh process has empty prompts and can enhance with the saved credential", QuitAndRelaunchSession));
+            tests.Add(new KeyValuePair<string, Action>("Hide keeps a pending enhancement hidden; Quit cancels pending cloud work", PendingSessionLifecycle));
+        }
+
+        private static void PendingSessionLifecycle()
+        {
+            string path = TestRunner.CreateCredentialPath();
+            try
+            {
+                var credentials = new DpapiCredentialStore(path);
+                credentials.Save(TestRunner.TestKey);
+                var first = new TaskCompletionSource<HttpResponseMessage>();
+                var second = new TaskCompletionSource<HttpResponseMessage>();
+                CancellationToken pendingCancellation = CancellationToken.None;
+                int submitted = 0;
+                using (var transport = new ControlledHttp { Respond = (request, cancellation) => {
+                    pendingCancellation = cancellation;
+                    return ++submitted == 1 ? first.Task : second.Task;
+                } })
+                using (var client = new HttpClient(transport))
+                using (var widget = new FloatingWidgetContext(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+                {
+                    var launcher = widget.MainForm;
+                    var open = TestRunner.Control<Button>(launcher, "OpenEditor");
+                    open.PerformClick();
+                    var editor = Application.OpenForms.OfType<MainForm>().Single();
+                    TestRunner.Control<TextBox>(editor, "RoughPrompt").Text = TestRunner.RoughPrompt;
+                    var enhance = TestRunner.Control<Button>(editor, "Enhance");
+                    enhance.PerformClick();
+                    TestRunner.Require(!enhance.Enabled, "The controlled enhancement must still be pending.");
+                    TestRunner.Control<Button>(editor, "HideWidget").PerformClick();
+                    first.SetResult(TestRunner.Completion(TestRunner.EnhancedPrompt));
+                    TestRunner.PumpUntil(() => enhance.Enabled);
+                    TestRunner.Require(!editor.Visible && !launcher.Visible,
+                        "Completing cloud work must not unhide the widget.");
+                    var menu = launcher.ContextMenuStrip;
+                    NotificationArea.OpenPromptEnhancerMenu();
+                    TestRunner.PumpUntil(() => menu.Visible);
+                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
+                    menu.Close();
+                    open.PerformClick();
+                    TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
+                        TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == TestRunner.EnhancedPrompt,
+                        "An enhancement completed while hidden must be available on restoration.");
+                    enhance.PerformClick();
+                    TestRunner.Control<Button>(editor, "Quit").PerformClick();
+                    TestRunner.Require(pendingCancellation.IsCancellationRequested && editor.IsDisposed && launcher.IsDisposed,
+                        "Quit must remain available while enhancing, cancel cloud work, and dispose both windows.");
+                    second.SetResult(TestRunner.Completion("A late result after Quit"));
+                    Application.DoEvents();
+                    TestRunner.Require(!Application.OpenForms.OfType<MainForm>().Any(),
+                        "A late response after Quit must not restore a prompt editor.");
+                }
+            }
+            finally { Directory.Delete(Path.GetDirectoryName(path), true); }
+        }
+
+        private static void QuitAndRelaunchSession()
+        {
+            string path = TestRunner.CreateCredentialPath();
+            try
+            {
+                RunSessionProcess(path, "save-and-quit");
+                byte[] protectedKey = File.ReadAllBytes(path);
+                RunSessionProcess(path, "relaunch-and-quit");
+                TestRunner.Require(protectedKey.SequenceEqual(File.ReadAllBytes(path)),
+                    "Quit and relaunch must not replace or remove the protected credential.");
+                TestRunner.Require(Directory.GetFiles(Path.GetDirectoryName(path), "*", SearchOption.AllDirectories).SequenceEqual(new[] { path }),
+                    "Only the protected credential may persist; no prompt history, settings, or logs.");
+            }
+            finally { Directory.Delete(Path.GetDirectoryName(path), true); }
+        }
+
+        private static void RunSessionProcess(string path, string mode)
+        {
+            var start = new ProcessStartInfo {
+                FileName = System.Reflection.Assembly.GetExecutingAssembly().Location,
+                Arguments = "--session-workflow \"" + path + "\" " + mode,
+                UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true
+            };
+            using (var process = Process.Start(start))
+            {
+                if (!process.WaitForExit(15000)) { process.Kill(); process.WaitForExit(); throw new Exception("Session process did not exit after Quit."); }
+                TestRunner.Require(process.ExitCode == 0, "Session process failed: " + process.StandardError.ReadToEnd());
+            }
+        }
+
+        public static void SessionProcess(string path, string mode)
+        {
+            var credentials = new DpapiCredentialStore(path);
+            using (var transport = SuccessfulTransport())
+            using (var client = new HttpClient(transport))
+            using (var widget = new FloatingWidgetContext(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+            using (var timer = new System.Windows.Forms.Timer { Interval = 20 })
+            {
+                Exception failure = null;
+                MainForm editor = null;
+                var launcher = widget.MainForm;
+                timer.Tick += delegate {
+                    timer.Stop();
+                    try
+                    {
+                        TestRunner.Control<Button>(launcher, "OpenEditor").PerformClick();
+                        Application.DoEvents();
+                        editor = Application.OpenForms.OfType<MainForm>().Single();
+                        TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == "" &&
+                            TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == "",
+                            "Every application process must start without the previous rough or enhanced prompt.");
+                        if (mode == "save-and-quit") SaveThroughSettings(editor, TestRunner.TestKey);
+                        else TestRunner.Require(TestRunner.Control<Label>(editor, "Status").Text.Contains("Saved API key"),
+                            "A fresh application session must recognize the credential saved before Quit.");
+                        EnhanceThroughDesktop(editor);
+                        if (mode == "save-and-quit") TestRunner.Control<Button>(editor, "Quit").PerformClick();
+                        else
+                        {
+                            TestRunner.Control<Button>(editor, "HideWidget").PerformClick();
+                            var menu = launcher.ContextMenuStrip;
+                            menu.Show(new Point(100, 100));
+                            ((ToolStripMenuItem)menu.Items.Find("Quit", false).Single()).PerformClick();
+                        }
+                    }
+                    catch (Exception error) { failure = error; widget.ExitThread(); }
+                };
+                timer.Start();
+                Application.Run(widget);
+                if (failure != null) throw failure;
+                TestRunner.Require(editor != null && editor.IsDisposed && launcher.IsDisposed,
+                    "Quit must close both windows and end the real application message loop.");
+            }
+        }
+
+        private static void HideRestoreSession()
+        {
+            string path = TestRunner.CreateCredentialPath();
+            try
+            {
+                var credentials = new DpapiCredentialStore(path);
+                credentials.Save(TestRunner.TestKey);
+                using (var transport = SuccessfulTransport())
+                using (var client = new HttpClient(transport))
+                using (var widget = new FloatingWidgetContext(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+                {
+                    var launcher = widget.MainForm;
+                    var open = TestRunner.Control<Button>(launcher, "OpenEditor");
+                    open.PerformClick();
+                    var editor = Application.OpenForms.OfType<MainForm>().Single();
+                    EnhanceThroughDesktop(editor);
+                    const string reviewed = "A reviewed result\r\nwith a second line.";
+                    TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text = reviewed;
+                    TestRunner.Control<Button>(editor, "HideWidget").PerformClick();
+                    TestRunner.Require(!launcher.Visible && !editor.Visible && !editor.IsDisposed,
+                        "Hide must remove both floating windows while retaining the session.");
+                    var menu = launcher.ContextMenuStrip;
+                    TestRunner.Require(menu != null, "The launcher must offer session commands in its context menu.");
+                    NotificationArea.OpenPromptEnhancerMenu();
+                    TestRunner.PumpUntil(() => menu.Visible);
+                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
+                    menu.Close();
+                    TestRunner.Require(launcher.Visible && !editor.Visible, "Show widget must restore the floating button.");
+                    open.PerformClick();
+                    TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
+                        TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == reviewed &&
+                        TestRunner.Control<Button>(editor, "Copy").Enabled,
+                        "Restoring must preserve rough and reviewed enhanced prompts with Copy available.");
+                    editor.Close();
+                    menu.Show(launcher, new Point(0, launcher.Height));
+                    ((ToolStripMenuItem)menu.Items.Find("HideWidget", false).Single()).PerformClick();
+                    menu.Close();
+                    TestRunner.Require(!launcher.Visible && !editor.Visible, "The launcher menu must also hide the widget.");
+                    NotificationArea.OpenPromptEnhancerMenu();
+                    TestRunner.PumpUntil(() => menu.Visible);
+                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
+                    menu.Close();
+                    open.PerformClick();
+                    TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
+                        TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == reviewed,
+                        "Hide and restore from the launcher must preserve the same session.");
+                }
+            }
+            finally { Directory.Delete(Path.GetDirectoryName(path), true); }
+        }
+
+        private static void ClearSession()
+        {
+            string path = TestRunner.CreateCredentialPath();
+            try
+            {
+                var credentials = new DpapiCredentialStore(path);
+                using (var transport = SuccessfulTransport())
+                using (var client = new HttpClient(transport))
+                using (var window = new MainForm(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+                {
+                    window.Show();
+                    Application.DoEvents();
+                    SaveThroughSettings(window, TestRunner.TestKey);
+                    EnhanceThroughDesktop(window);
+                    TestRunner.Control<TextBox>(window, "EnhancedPrompt").Text = "My reviewed result";
+                    TestRunner.Control<Button>(window, "Clear").PerformClick();
+                    TestRunner.Require(TestRunner.Control<TextBox>(window, "RoughPrompt").Text == "" &&
+                        TestRunner.Control<TextBox>(window, "EnhancedPrompt").Text == "" &&
+                        !TestRunner.Control<Button>(window, "Copy").Enabled &&
+                        TestRunner.Control<Button>(window, "Enhance").Enabled,
+                        "Clear must empty both prompts, disable Copy, and allow a fresh task.");
+                    EnhanceThroughDesktop(window);
+                    window.Close();
+                }
+            }
+            finally { Directory.Delete(Path.GetDirectoryName(path), true); }
         }
 
         private static void FloatingWidgetMouse()
@@ -117,6 +327,9 @@ namespace PromptEnhancer.Tests
                         "Closing the editor must return to a working launcher without exiting.");
                     open.PerformClick();
                     Application.DoEvents();
+                    TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
+                        TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == TestRunner.EnhancedPrompt,
+                        "Closing and reopening must preserve both current prompts.");
                     editor.WindowState = FormWindowState.Minimized;
                     TestRunner.PumpUntil(() => launcher.Visible && !editor.Visible);
                     TestRunner.Require(!editor.IsDisposed && !editor.Visible && launcher.Visible,
@@ -127,6 +340,9 @@ namespace PromptEnhancer.Tests
                         "The editor must expand normally again after minimization. Editor visible: " + editor.Visible +
                         ", state: " + editor.WindowState + ", launcher visible: " + launcher.Visible +
                         ", open enabled: " + open.Enabled + ", size: " + editor.Size + ", expected: " + expandedSize);
+                    TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
+                        TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == TestRunner.EnhancedPrompt,
+                        "Minimizing and reopening must preserve both current prompts.");
                     editor.Close();
                     bool exited = false;
                     widget.ThreadExit += delegate { exited = true; };

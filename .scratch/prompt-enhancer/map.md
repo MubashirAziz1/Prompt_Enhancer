@@ -7,6 +7,7 @@
 
 ## Decisions so far
 
+- The user explicitly authorized [ticket 04](issues/04-current-prompt-session.md) on 2026-11-08. Session controls are being implemented at the previously confirmed DesktopWorkflow test boundary; the pre-implementation review baseline is `0beca54` (proposed to the user).
 - Product: a floating desktop widget that accepts a pasted rough prompt and produces a structured, grammatically correct English prompt.
 - Preserve the user's intent and avoid unnecessary verbosity.
 - First version targets Windows only.

@@ -20,9 +20,14 @@ namespace PromptEnhancer.Tests
             Stroke(control.FindForm(), Center(control), Point.Empty);
         }
 
-        public static void Stroke(Form window, Point start, Point delta)
+        public static void ClickAt(Point position, bool rightButton)
         {
-            TestRunner.Require(GetAncestor(WindowFromPoint(start), 2) == window.Handle,
+            Stroke(null, position, Point.Empty, rightButton);
+        }
+
+        public static void Stroke(Form window, Point start, Point delta, bool rightButton = false)
+        {
+            TestRunner.Require(window == null || GetAncestor(WindowFromPoint(start), 2) == window.Handle,
                 "Mouse input must start on the intended test window.");
             Point previous = Cursor.Position;
             Rectangle desktop = SystemInformation.VirtualScreen;
@@ -31,7 +36,7 @@ namespace PromptEnhancer.Tests
                 {
                     Move(start, desktop);
                     Thread.Sleep(40);
-                    Send(new MouseInput { Flags = 0x0002 }); // Left down.
+                    Send(new MouseInput { Flags = rightButton ? 0x0008u : 0x0002u });
                     Thread.Sleep(60);
                     for (int step = 1; step <= 8; step++)
                     {
@@ -39,7 +44,7 @@ namespace PromptEnhancer.Tests
                         Thread.Sleep(30);
                     }
                 }
-                finally { Send(new MouseInput { Flags = 0x0004 }); } // Left up, even on failure.
+                finally { Send(new MouseInput { Flags = rightButton ? 0x0010u : 0x0004u }); }
             });
             try
             {

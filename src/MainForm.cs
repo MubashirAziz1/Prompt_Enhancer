@@ -17,7 +17,11 @@ namespace PromptEnhancer
         private readonly Button paste;
         private readonly Button copy;
         private readonly Button settings;
+        private readonly Button clear;
         private readonly Label status;
+
+        public event EventHandler HideRequested;
+        public event EventHandler QuitRequested;
 
         public MainForm(IEnhancementProvider provider, ICredentialStore credentials)
         {
@@ -34,7 +38,7 @@ namespace PromptEnhancer
             TopMost = true;
 
             var layout = new TableLayoutPanel {
-                Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 10
+                Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 11
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
@@ -44,6 +48,7 @@ namespace PromptEnhancer
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
@@ -87,10 +92,44 @@ namespace PromptEnhancer
             };
             copy.Click += Copy;
             enhancedPrompt.TextChanged += delegate { UpdateCopyAvailability(); };
-            layout.Controls.Add(copy, 0, 7);
+            clear = new Button {
+                Name = "Clear", Text = "C&lear", AccessibleName = "Clear current prompts", TabIndex = 0,
+                Dock = DockStyle.Left, Width = 130, Margin = new Padding(0, 4, 0, 4)
+            };
+            clear.Click += delegate {
+                roughPrompt.Clear();
+                enhancedPrompt.Clear();
+                status.Text = "Cleared. Ready for a new prompt.";
+                roughPrompt.Focus();
+            };
+            var resultActions = new Panel { Dock = DockStyle.Fill, Margin = Padding.Empty, TabIndex = 4 };
+            copy.TabIndex = 1;
+            resultActions.Controls.Add(clear);
+            resultActions.Controls.Add(copy);
+            layout.Controls.Add(resultActions, 0, 7);
+            var sessionActions = new Panel { Dock = DockStyle.Fill, Margin = Padding.Empty, TabIndex = 5 };
+            var hide = new Button {
+                Name = "HideWidget", Text = "&Hide", AccessibleName = "Hide widget", TabIndex = 0,
+                Dock = DockStyle.Left, Width = 130
+            };
+            hide.Click += delegate {
+                var handler = HideRequested;
+                if (handler != null) handler(this, EventArgs.Empty);
+            };
+            sessionActions.Controls.Add(hide);
+            var quit = new Button {
+                Name = "Quit", Text = "&Quit", AccessibleName = "Quit Prompt Enhancer", TabIndex = 1,
+                Dock = DockStyle.Right, Width = 130
+            };
+            quit.Click += delegate {
+                var handler = QuitRequested;
+                if (handler != null) handler(this, EventArgs.Empty);
+            };
+            sessionActions.Controls.Add(quit);
+            layout.Controls.Add(sessionActions, 0, 8);
             status = new Label { Name = "Status", Text = "Ready. Add your API key in Settings to begin.", Dock = DockStyle.Fill, AutoEllipsis = false, Padding = new Padding(0, 5, 0, 0) };
-            layout.Controls.Add(status, 0, 8);
-            layout.Controls.Add(new Label { Text = "Enhance sends your text to your cloud provider. Usage charges may apply.", Dock = DockStyle.Fill, Font = new Font(Font.FontFamily, 9), ForeColor = Color.DimGray }, 0, 9);
+            layout.Controls.Add(status, 0, 9);
+            layout.Controls.Add(new Label { Text = "Enhance sends your text to your cloud provider. Usage charges may apply.", Dock = DockStyle.Fill, Font = new Font(Font.FontFamily, 9), ForeColor = Color.DimGray }, 0, 10);
             Controls.Add(layout);
             Shown += delegate {
                 try { if (!String.IsNullOrWhiteSpace(credentials.Load())) status.Text = "Ready. Saved API key available."; }
@@ -157,7 +196,7 @@ namespace PromptEnhancer
         private async void Enhance(object sender, EventArgs args)
         {
             if (String.IsNullOrWhiteSpace(roughPrompt.Text)) { status.Text = "Enter a rough prompt first."; return; }
-            enhance.Enabled = settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = false;
+            enhance.Enabled = settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = clear.Enabled = false;
             enhancedPrompt.Clear();
             status.Text = "Enhancing...";
             try
@@ -177,7 +216,7 @@ namespace PromptEnhancer
             {
                 if (!IsDisposed)
                 {
-                    settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = true;
+                    settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = clear.Enabled = true;
                     UpdateCopyAvailability();
                     enhance.Enabled = true;
                 }

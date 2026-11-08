@@ -1,9 +1,8 @@
 # Prompt Enhancer
 
-A native Windows application for rewriting rough English prompts. Tickets 01-03
+A native Windows application for rewriting rough English prompts. Tickets 01-04
 provide a draggable floating launcher, Settings, a rough-prompt editor, Enhance,
-an editable result, and explicit Paste and Copy actions. Session controls belong
-to ticket 04.
+an editable result, explicit Paste and Copy actions, and session controls.
 
 Requires Windows 10/11 with .NET Framework 4.8 or later and Windows PowerShell 5.1.
 No package restore, Node/Python runtime, SDK, website, or installer is needed.
@@ -18,8 +17,20 @@ The app starts as a small **Prompt Enhancer** button above ordinary application
 windows. Click it to open the editor. Drag the button to move it; drag the
 editor's title bar to move the expanded window. Both stay above your other
 editors while you work. Closing or minimizing the editor returns to the button.
-To exit, focus the floating button and press **Alt+F4**. Hide, Clear, and a
-dedicated Quit control belong to ticket 04.
+Both current prompts, including result edits, survive closing or minimizing.
+Select **Hide** in the editor, or right-click the floating button and choose
+**Hide**, to remove both floating windows. To restore, right-click the
+**Prompt Enhancer** notification icon in the Windows system tray and choose
+**Show widget**, or double-click that icon. Look under **Show hidden icons**
+if Windows places it in the tray overflow. Click the restored button to reopen
+the same prompts.
+
+Use **Clear** when enhancement is idle to empty both prompts and begin a fresh
+task. Select **Quit** in the editor or the button/tray menu to exit and discard
+session contents. Alt+F4 on the floating button also exits. Hide and Quit remain
+available during enhancement; completed work stays hidden until you restore it,
+and Quit cancels pending work. Relaunch starts with empty prompts. Clear and Quit
+keep your protected API key available for the next enhancement/session.
 
 Open **Settings**, enter your OpenRouter API key, and select **Save**. Type or
 paste a rough prompt (using **Paste** or Ctrl+V), then select **Enhance**. Review
@@ -40,7 +51,8 @@ The API key is stored as a Windows DPAPI `CurrentUser` encrypted blob at
 `%LOCALAPPDATA%\PromptEnhancer\openrouter-key.dpapi`, never as plaintext settings.
 It is decrypted in memory for authentication. DPAPI does not defend against
 other software already running as your Windows account. No application logs,
-prompt history, or remote error bodies are written.
+prompt history, or remote error bodies are written. Session-only local storage
+does not imply that the cloud provider has no retention policy.
 
 Build/typecheck (compiler warnings are errors):
 
@@ -70,6 +82,14 @@ in a separate process. Native Windows mouse input verifies launcher dragging,
 click-to-expand, title-bar movement, and text selection. The companion editor
 accepts typing while window hit-testing verifies the widget stays above it;
 controlled enhancement, Alt+F4 collapse, minimize/reopen, and exit are also checked.
+Session checks preserve reviewed results through collapse/reopen and Hide/Restore.
+Windows UI Automation locates the real notification icon (including tray overflow)
+and native mouse input opens its restore menu. Clear is followed by a fresh
+enhancement using the saved key. Two separate application processes exercise Quit
+and relaunch: prompts start empty and the protected key still authenticates.
+Pending work is checked through Hide/Restore and Quit as well. Test-only UI
+Automation references come from the installed .NET Framework; no extra download
+is required.
 The companion process is closed and the mouse position restored after checks.
 Run desktop checks on an unlocked interactive Windows desktop and leave mouse
 and keyboard idle while they run.

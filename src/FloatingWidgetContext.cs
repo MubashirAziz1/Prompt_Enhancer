@@ -9,7 +9,10 @@ namespace PromptEnhancer
     {
         private readonly Form launcher;
         private readonly MainForm editor;
+        private readonly NotifyIcon notificationIcon;
+        private readonly ContextMenuStrip sessionMenu;
         private bool exiting;
+        private bool hidden;
 
         public FloatingWidgetContext(IEnhancementProvider provider, ICredentialStore credentials)
         {
@@ -27,6 +30,25 @@ namespace PromptEnhancer
             };
             button.Click += delegate { Expand(); };
             launcher.Controls.Add(button);
+            sessionMenu = new ContextMenuStrip();
+            var restore = new ToolStripMenuItem("&Show widget") { Name = "RestoreWidget" };
+            restore.Click += delegate { RestoreWidget(); };
+            var hide = new ToolStripMenuItem("&Hide") { Name = "HideWidget" };
+            hide.Click += delegate { HideWidget(); };
+            sessionMenu.Items.Add(restore);
+            sessionMenu.Items.Add(hide);
+            sessionMenu.Items.Add(new ToolStripSeparator());
+            var quit = new ToolStripMenuItem("&Quit") { Name = "Quit" };
+            quit.Click += delegate { ExitThread(); };
+            sessionMenu.Items.Add(quit);
+            launcher.ContextMenuStrip = button.ContextMenuStrip = sessionMenu;
+            notificationIcon = new NotifyIcon {
+                Text = "Prompt Enhancer", Icon = SystemIcons.Application,
+                ContextMenuStrip = sessionMenu, Visible = true
+            };
+            notificationIcon.DoubleClick += delegate { RestoreWidget(); };
+            editor.HideRequested += delegate { HideWidget(); };
+            editor.QuitRequested += delegate { ExitThread(); };
             var workArea = Screen.PrimaryScreen.WorkingArea;
             launcher.Location = new Point(workArea.Right - launcher.Width - 24, workArea.Top + 80);
             editor.FormClosing += delegate(object sender, FormClosingEventArgs args) {
@@ -49,6 +71,7 @@ namespace PromptEnhancer
 
         private void Expand()
         {
+            hidden = false;
             var workArea = Screen.FromControl(launcher).WorkingArea;
             Size editorSize = editor.WindowState == FormWindowState.Minimized ? editor.RestoreBounds.Size : editor.Size;
             editor.StartPosition = FormStartPosition.Manual;
@@ -64,15 +87,34 @@ namespace PromptEnhancer
 
         private void Collapse()
         {
+            if (hidden || exiting) return;
             // Keep native restore bounds intact until the next expansion.
             editor.Hide();
             launcher.Show();
+        }
+
+        private void HideWidget()
+        {
+            hidden = true;
+            editor.Hide();
+            launcher.Hide();
+        }
+
+        private void RestoreWidget()
+        {
+            if (exiting) return;
+            hidden = false;
+            editor.Hide();
+            launcher.Show();
+            launcher.Activate();
         }
 
         protected override void ExitThreadCore()
         {
             if (exiting) return;
             exiting = true;
+            notificationIcon.Dispose();
+            sessionMenu.Dispose();
             editor.Close();
             launcher.Close();
             base.ExitThreadCore();
@@ -83,6 +125,8 @@ namespace PromptEnhancer
             if (disposing)
             {
                 exiting = true;
+                notificationIcon.Dispose();
+                sessionMenu.Dispose();
                 editor.Dispose();
                 launcher.Dispose();
             }

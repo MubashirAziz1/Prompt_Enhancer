@@ -22,6 +22,11 @@ namespace PromptEnhancer.Tests
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Length == 3 && args[0] == "--session-workflow")
+            {
+                try { DesktopWorkflowTests.SessionProcess(args[1], args[2]); return 0; }
+                catch (Exception error) { Console.Error.WriteLine(error.Message); return 1; }
+            }
             if (args.Length == 1 && args[0] == "--companion-editor")
             {
                 CompanionEditor.Run();

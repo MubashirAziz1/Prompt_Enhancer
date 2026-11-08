@@ -19,9 +19,11 @@ $arguments = @('/nologo', '/warn:4', '/warnaserror+', '/optimize+', '/platform:a
 if ($LASTEXITCODE -ne 0) { throw 'Application compilation failed.' }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'src\PromptEnhancer.exe.config') -Destination $output
 if ($Tests) {
+    $testReferences = @($references) + @('UIAutomationClient.dll', 'UIAutomationTypes.dll', 'WindowsBase.dll' |
+        ForEach-Object { '/reference:' + (Join-Path $framework ('WPF\' + $_)) })
     $testSources = @(Get-ChildItem -LiteralPath (Join-Path $projectRoot 'tests') -Filter '*.cs' -Recurse |
         ForEach-Object { $_.FullName })
-    & $compiler @arguments @references '/target:exe' '/main:PromptEnhancer.Tests.TestRunner' "/out:$output\PromptEnhancer.Tests.exe" @sources @testSources
+    & $compiler @arguments @testReferences '/target:exe' '/main:PromptEnhancer.Tests.TestRunner' "/out:$output\PromptEnhancer.Tests.exe" @sources @testSources
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src\PromptEnhancer.exe.config') -Destination (Join-Path $output 'PromptEnhancer.Tests.exe.config')
 }
