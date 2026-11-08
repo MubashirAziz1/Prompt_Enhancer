@@ -67,7 +67,10 @@ namespace PromptEnhancer.Tests
                     TestRunner.PumpUntil(() => TestRunner.Control<Button>(window, "Enhance").Enabled);
                     TestRunner.Require(output.Text == TestRunner.EnhancedPrompt && output.Enabled && !output.ReadOnly && copy.Enabled &&
                         Clipboard.GetText() == TestRunner.RoughPrompt,
-                        "The enhanced prompt must be editable and ready for explicit Copy without automatic copying.");
+                        "The enhanced prompt must be editable and ready for explicit Copy without automatic copying. " +
+                        "Result matches: " + (output.Text == TestRunner.EnhancedPrompt) + ", editor enabled: " + output.Enabled +
+                        ", read-only: " + output.ReadOnly + ", Copy enabled: " + copy.Enabled +
+                        ", clipboard unchanged: " + (Clipboard.GetText() == TestRunner.RoughPrompt));
                     const string reviewed = "Write a short email to my manager.\r\nRequest leave tomorrow for a personal appointment.\r\nUse a polite tone \u2014 thank you.";
                     output.SelectAll();
                     output.SelectedText = reviewed;

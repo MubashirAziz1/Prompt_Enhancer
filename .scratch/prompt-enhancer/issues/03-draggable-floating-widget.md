@@ -2,11 +2,12 @@
 
 Type: task
 Status: ready-for-agent
+Execution: claimed
 Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 
 **What to build:** Make the existing enhancement workflow available from a small floating button that expands into a movable editor and stays available over another Windows application.
 
-**Execution:** Implementation remains on hold until the user explicitly instructs it to begin. Ticket approval authorizes publication only.
+**Execution:** Implementation explicitly authorized by the user's implement request on 2026-11-08.
 
 - [ ] The application starts as a small floating button; clicking it expands the prompt editor.
 - [ ] Both the floating button and the expanded editor can be moved with the mouse.

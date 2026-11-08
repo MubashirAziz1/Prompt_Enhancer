@@ -26,8 +26,8 @@ namespace PromptEnhancer
                 // Never forward Authorization to a redirected host.
                 using (var handler = new HttpClientHandler { AllowAutoRedirect = false })
                 using (var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(60), MaxResponseContentBufferSize = 1024 * 1024 })
-                using (var window = new MainForm(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
-                    Application.Run(window);
+                using (var widget = new FloatingWidgetContext(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials))
+                    Application.Run(widget);
             }
             catch
             {

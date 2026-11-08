@@ -1,8 +1,9 @@
 # Prompt Enhancer
 
-A native Windows application for rewriting rough English prompts. Tickets 01-02
-provide Settings, a rough-prompt editor, Enhance, an editable result, and explicit
-Paste and Copy actions. Floating-widget and session controls belong to later tickets.
+A native Windows application for rewriting rough English prompts. Tickets 01-03
+provide a draggable floating launcher, Settings, a rough-prompt editor, Enhance,
+an editable result, and explicit Paste and Copy actions. Session controls belong
+to ticket 04.
 
 Requires Windows 10/11 with .NET Framework 4.8 or later and Windows PowerShell 5.1.
 No package restore, Node/Python runtime, SDK, website, or installer is needed.
@@ -12,6 +13,13 @@ From the project directory:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
+
+The app starts as a small **Prompt Enhancer** button above ordinary application
+windows. Click it to open the editor. Drag the button to move it; drag the
+editor's title bar to move the expanded window. Both stay above your other
+editors while you work. Closing or minimizing the editor returns to the button.
+To exit, focus the floating button and press **Alt+F4**. Hide, Clear, and a
+dedicated Quit control belong to ticket 04.
 
 Open **Settings**, enter your OpenRouter API key, and select **Save**. Type or
 paste a rough prompt (using **Paste** or Ctrl+V), then select **Enhance**. Review

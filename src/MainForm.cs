@@ -31,6 +31,7 @@ namespace PromptEnhancer
             MinimumSize = new Size(520, 600);
             StartPosition = FormStartPosition.CenterScreen;
             AutoScaleMode = AutoScaleMode.Dpi;
+            TopMost = true;
 
             var layout = new TableLayoutPanel {
                 Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 10
@@ -96,7 +97,16 @@ namespace PromptEnhancer
                 catch { status.Text = "The saved API key could not be read. Open Settings to replace it."; }
                 roughPrompt.Focus();
             };
-            FormClosed += delegate { lifetime.Cancel(); lifetime.Dispose(); };
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && !IsDisposed)
+            {
+                lifetime.Cancel();
+                lifetime.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         private static TextBox Editor(string name, bool readOnly)
@@ -167,8 +177,9 @@ namespace PromptEnhancer
             {
                 if (!IsDisposed)
                 {
-                    enhance.Enabled = settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = true;
+                    settings.Enabled = roughPrompt.Enabled = paste.Enabled = enhancedPrompt.Enabled = true;
                     UpdateCopyAvailability();
+                    enhance.Enabled = true;
                 }
             }
         }
