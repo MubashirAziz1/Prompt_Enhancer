@@ -1,5 +1,9 @@
 # Prompt Enhancer
 
+WinUI migration development is available separately; see
+[WinUI build, checks, and editor launch](docs/winui-development.md).
+The normal launch command below continues to use Windows Forms during ticket 01.
+
 A native Windows application for rewriting rough English prompts. Tickets 01-05
 provide a draggable floating launcher, Settings, a rough-prompt editor, Enhance,
 an editable result, explicit Paste and Copy actions, and session controls.

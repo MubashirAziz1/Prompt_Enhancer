@@ -1,4 +1,6 @@
 build/
+**/obj/
+**/bin/
 .test-artifacts/
 *.user
 *.suo
