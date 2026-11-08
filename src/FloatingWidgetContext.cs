@@ -37,7 +37,11 @@ namespace PromptEnhancer
                 }
             };
             editor.Resize += delegate {
-                if (!exiting && editor.WindowState == FormWindowState.Minimized) Collapse();
+                if (!exiting && editor.WindowState == FormWindowState.Minimized)
+                    editor.BeginInvoke(new Action(delegate {
+                        // Finish the native minimize transition before restoring normal state.
+                        if (!exiting && !editor.IsDisposed && editor.WindowState == FormWindowState.Minimized) Collapse();
+                    }));
             };
             MainForm = launcher;
             launcher.Show();
@@ -46,20 +50,22 @@ namespace PromptEnhancer
         private void Expand()
         {
             var workArea = Screen.FromControl(launcher).WorkingArea;
+            Size editorSize = editor.WindowState == FormWindowState.Minimized ? editor.RestoreBounds.Size : editor.Size;
             editor.StartPosition = FormStartPosition.Manual;
             editor.Location = new Point(
-                Math.Max(workArea.Left, Math.Min(launcher.Left, workArea.Right - editor.Width)),
-                Math.Max(workArea.Top, Math.Min(launcher.Top, workArea.Bottom - editor.Height)));
+                Math.Max(workArea.Left, Math.Min(launcher.Left, workArea.Right - editorSize.Width)),
+                Math.Max(workArea.Top, Math.Min(launcher.Top, workArea.Bottom - editorSize.Height)));
             editor.Show();
+            editor.WindowState = FormWindowState.Normal;
+            editor.Size = editorSize;
             launcher.Hide();
             editor.Activate();
         }
 
         private void Collapse()
         {
-            // Normalize while hidden so the next expansion is an ordinary editor window.
+            // Keep native restore bounds intact until the next expansion.
             editor.Hide();
-            editor.WindowState = FormWindowState.Normal;
             launcher.Show();
         }
 

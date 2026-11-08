@@ -65,6 +65,14 @@ evaluate live model quality. Desktop checks also exercise both the Paste button
 and actual Ctrl+V through Enhance, editing, and Copy, checking that the clipboard
 changes only on Copy and contains the edited result. These checks temporarily
 use the Windows clipboard and restore its original contents afterward.
+Widget checks start the real floating application context and an isolated editor
+in a separate process. Native Windows mouse input verifies launcher dragging,
+click-to-expand, title-bar movement, and text selection. The companion editor
+accepts typing while window hit-testing verifies the widget stays above it;
+controlled enhancement, Alt+F4 collapse, minimize/reopen, and exit are also checked.
+The companion process is closed and the mouse position restored after checks.
+Run desktop checks on an unlocked interactive Windows desktop and leave mouse
+and keyboard idle while they run.
 Test credentials use unique directories under
 `build\test-data` and are deleted after each check; the production credential path
 is never used. No external packages or test framework downloads are needed.

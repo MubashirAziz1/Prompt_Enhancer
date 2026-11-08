@@ -15,7 +15,7 @@ Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 - [x] The user can type, enhance, and view the result in the expanded editor using the existing enhancement flow.
 - [x] Minimizing or closing the expanded editor returns to the floating button instead of exiting the application.
 - [x] Dragging the widget does not prevent normal use of editor text fields and controls.
-- [ ] Verify expansion, dragging, enhancement, and collapse on Windows with another editor open. This does not require clipboard features from ticket 02.
+- [x] Verify expansion, dragging, enhancement, and collapse on Windows with another editor open. This does not require clipboard features from ticket 02.
 
 ## Comments
 
@@ -30,20 +30,26 @@ title-bar dragging, so text fields and controls retain their normal behavior.
 Closing or minimizing the editor returns to the launcher. Alt+F4 while the
 launcher is focused exits; dedicated session controls remain ticket 04.
 
-Warnings-as-errors compilation and all 14 existing controlled checks passed.
-An intermittent completion-order issue was reproduced and fixed by restoring
-Copy availability before enabling Enhance. These existing checks exercise the
-editor workflow directly; they do not verify the new launcher interaction.
+The user confirmed the DesktopWorkflow test seam and review baseline. All 16
+controlled checks pass with compiler warnings treated as errors. Two widget
+checks exercise the real application context: startup, expansion, enhancement,
+close/minimize collapse, reopening at the original size, and application exit;
+native mouse dragging of both forms; text selection and typing; and native
+Alt+F4 collapse. An isolated companion editor in a separate process receives
+typing while Windows hit-testing verifies the launcher and expanded editor
+remain visibly above it. The companion process is closed after the test and
+the mouse position is restored.
 
-The implementation checkboxes above describe code delivered, not completed
-interactive acceptance. Execution remains claimed until the final Windows
-acceptance check is complete. New widget checks await the requested test-seam
-confirmation required by the TDD skill. The Computer Use helper failed both
-initialization attempts with `windows sandbox failed: helper_unknown_error:
-setup refresh had errors`, so interactive expansion, dragging, overlay behavior
-over another editor, and collapse have not been verified. No live cloud calls,
-real API credentials, or paid usage were used.
+The lifecycle regression initially failed when reopening after minimization:
+Windows could leave the editor minimized or restore it at the minimum size.
+Collapse now waits until the native minimize transition finishes; expansion
+uses the native restore dimensions and explicitly restores normal state.
+The earlier Copy/Enhance completion-order fix is also covered by the existing
+clipboard workflow checks. No live cloud calls, real API credentials, or paid
+usage were used.
 
-The [implementation review](../draggable-widget-review.md) reports zero
-Standards findings and one Spec finding: the incomplete Windows acceptance
-check. No material implementation error was found by static inspection.
+The prior interactive Computer Use helper failure was bypassed by the native
+Windows acceptance tests at the confirmed seam. Windows widget acceptance is
+complete; execution remains claimed pending the final independent review.
+The [implementation review](../draggable-widget-review.md) will record that
+review against the confirmed baseline `e002829`.

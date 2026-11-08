@@ -22,6 +22,11 @@ namespace PromptEnhancer.Tests
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            if (args.Length == 1 && args[0] == "--companion-editor")
+            {
+                CompanionEditor.Run();
+                return 0;
+            }
             if (args.Length == 2 && args[0] == "--relaunch-workflow")
             {
                 try { DesktopWorkflowTests.UseSavedKeyAfterRelaunch(args[1]); return 0; }
