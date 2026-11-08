@@ -43,6 +43,9 @@
 - The user explicitly authorized [ticket 05](issues/05-recover-cloud-failures.md) on 2026-11-08. Commit `b758787` adds explicit Retry feedback, timeout-specific guidance, and credential classification for malformed saved keys. Failures preserve the rough prompt, keep errors outside copyable results, and allow Settings correction followed by retry with current input and credentials.
 - Ticket 05 is resolved and ready for human acceptance. Warnings-as-errors compilation and all 33 controlled checks pass, including 13 recovery checks covering authentication, connectivity, a real HttpClient timeout, provider errors, and unusable responses followed by success. The [ticket 05 review](cloud-failure-recovery-review.md), against baseline `baba548`, reports zero Standards and zero Spec findings. Verification used isolated build output because the user's running app locks the default executable; that app and the user's preexisting `.gitignore` changes were left untouched. Ticket 06 remains outside this request.
 
+- The user explicitly authorized [ticket 06](issues/06-concise-intent-preserving-enhancement.md) on 2026-11-08. Commit `2b64303` refines the provider-neutral policy and selects `openai/gpt-4.1` after Mini live checks exposed intent distortion. The [evaluation](enhancement-evaluation.md) records ten final non-sensitive examples through the real desktop workflow: all ten met the semantic rubric, latency 1.452-2.444 seconds (median 1.6825), total API usage cost $0.00854. A manual `evaluate.ps1 -Live` runner stays separate from controlled checks. The small sample does not guarantee future model quality.
+- Ticket 06 is resolved and ready for human acceptance. Warnings-as-errors compilation and all 33 controlled checks pass. [ADR 0002](../../docs/adr/0002-intent-preserving-enhancement-model.md) records the model selection; the [ticket 06 review](concise-enhancement-review.md) reports zero Standards and zero Spec findings against pre-implementation baseline `4b1186b`.
+
 ## Approved tickets
 
 | Ticket | Blocked by | Published issue |
@@ -57,7 +60,7 @@
 ## Fog
 
 - None for shared product understanding; the user confirmed the consolidated spec accurately captures their intent.
-- Initial technical choices are recorded in ADR 0001. Representative live model quality/latency/cost evaluation remains ticket 06.
+- Initial technical choices are recorded in ADR 0001. Ticket 06's live model quality/latency/cost evaluation is recorded in [enhancement-evaluation.md](enhancement-evaluation.md); ADR 0002 records the selected model.
 - Success examples, failure handling, distribution, and first-version boundaries.
 
 ## Design tree
@@ -70,4 +73,4 @@
 - Consolidated spec is in spec.md; shared understanding confirmed by the user.
 - At interview completion, the user requested no action on the spec. The later implement request supplied the instruction to begin ticket 01.
 
-Interview complete. Later implement requests authorized tickets 01-05; all five are complete. Other tickets retain their own scope and prerequisites.
+Interview complete. Later implement requests authorized tickets 01-06; all six are complete.
