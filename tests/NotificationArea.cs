@@ -1,14 +1,24 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Automation;
+using System.Windows.Forms;
 
 namespace PromptEnhancer.Tests
 {
     // Find the actual shell icon through accessibility, including the tray overflow.
     internal static class NotificationArea
     {
-        public static void OpenPromptEnhancerMenu()
+        public static void RestoreWidget(ContextMenuStrip menu)
+        {
+            OpenPromptEnhancerMenu();
+            TestRunner.PumpUntil(() => menu.Visible);
+            ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
+            menu.Close();
+        }
+
+        private static void OpenPromptEnhancerMenu()
         {
             Point? icon = FindButton("Prompt Enhancer");
             if (!icon.HasValue)

@@ -62,10 +62,7 @@ namespace PromptEnhancer.Tests
                     TestRunner.Require(!editor.Visible && !launcher.Visible,
                         "Completing cloud work must not unhide the widget.");
                     var menu = launcher.ContextMenuStrip;
-                    NotificationArea.OpenPromptEnhancerMenu();
-                    TestRunner.PumpUntil(() => menu.Visible);
-                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
-                    menu.Close();
+                    NotificationArea.RestoreWidget(menu);
                     open.PerformClick();
                     TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
                         TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == TestRunner.EnhancedPrompt,
@@ -180,10 +177,7 @@ namespace PromptEnhancer.Tests
                         "Hide must remove both floating windows while retaining the session.");
                     var menu = launcher.ContextMenuStrip;
                     TestRunner.Require(menu != null, "The launcher must offer session commands in its context menu.");
-                    NotificationArea.OpenPromptEnhancerMenu();
-                    TestRunner.PumpUntil(() => menu.Visible);
-                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
-                    menu.Close();
+                    NotificationArea.RestoreWidget(menu);
                     TestRunner.Require(launcher.Visible && !editor.Visible, "Show widget must restore the floating button.");
                     open.PerformClick();
                     TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
@@ -195,10 +189,7 @@ namespace PromptEnhancer.Tests
                     ((ToolStripMenuItem)menu.Items.Find("HideWidget", false).Single()).PerformClick();
                     menu.Close();
                     TestRunner.Require(!launcher.Visible && !editor.Visible, "The launcher menu must also hide the widget.");
-                    NotificationArea.OpenPromptEnhancerMenu();
-                    TestRunner.PumpUntil(() => menu.Visible);
-                    ((ToolStripMenuItem)menu.Items.Find("RestoreWidget", false).Single()).PerformClick();
-                    menu.Close();
+                    NotificationArea.RestoreWidget(menu);
                     open.PerformClick();
                     TestRunner.Require(TestRunner.Control<TextBox>(editor, "RoughPrompt").Text == TestRunner.RoughPrompt &&
                         TestRunner.Control<TextBox>(editor, "EnhancedPrompt").Text == reviewed,
