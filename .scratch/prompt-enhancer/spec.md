@@ -1,6 +1,6 @@
 # Floating Prompt Enhancer
 
-State: Product decisions confirmed; tickets 01-03 completed; ticket 04 explicitly authorized and in progress.
+State: Product decisions confirmed; tickets 01-04 explicitly authorized and completed.
 
 ## Problem
 
@@ -74,5 +74,6 @@ Shared understanding confirmed by the user. Ticket 01 was explicitly authorized
 through the implement request on 2026-11-08. Ticket 02 was subsequently explicitly
 authorized and completed on the same date. Ticket 03 was then explicitly
 authorized, implemented, and verified on Windows. Ticket 04 was explicitly
-authorized through the implement request on 2026-11-08. Other implementation work remains
+authorized through the implement request on 2026-11-08, implemented, and verified
+on Windows. Other implementation work remains
 scoped to its individual tickets.

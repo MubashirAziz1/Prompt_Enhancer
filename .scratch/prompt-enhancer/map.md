@@ -7,7 +7,6 @@
 
 ## Decisions so far
 
-- The user explicitly authorized [ticket 04](issues/04-current-prompt-session.md) on 2026-11-08. Session controls are being implemented at the previously confirmed DesktopWorkflow test boundary; the pre-implementation review baseline is `0beca54` (proposed to the user).
 - Product: a floating desktop widget that accepts a pasted rough prompt and produces a structured, grammatically correct English prompt.
 - Preserve the user's intent and avoid unnecessary verbosity.
 - First version targets Windows only.
@@ -39,6 +38,8 @@
 - The user explicitly authorized [ticket 03](issues/03-draggable-floating-widget.md) on 2026-11-08. Commit `162dab8` adds a draggable topmost launcher around the existing topmost editor; closing or minimizing the editor returns to the launcher. All 14 existing checks pass, including the completion-order fix that restores Copy before enabling Enhance.
 - The user confirmed the DesktopWorkflow test seam and review baseline for ticket 03. All 16 checks now pass. New native Windows checks verify launcher and editor dragging, normal text interaction, controlled enhancement, collapse/reopen, and actual stacking above an active companion editor in a separate process. The tests exposed and drove a fix for minimize/reopen state and size restoration.
 - Ticket 03 is resolved and ready for human acceptance. Commit `61d0331` completes Windows acceptance and fixes minimize/reopen state and size restoration. The final [ticket 03 implementation review](draggable-widget-review.md) reports zero Standards findings and zero Spec findings. Ticket 04 is unblocked; its implementation still requires its own user authorization.
+- The user explicitly authorized [ticket 04](issues/04-current-prompt-session.md) on 2026-11-08. Commit `540184e` adds Clear, Hide, tray restoration, and Quit; `d4c81cf` shares native tray test steps after review. Closing/minimizing/hiding preserve current prompts. Clear permits a fresh task; Quit cancels pending work and exits. Fresh-process relaunch starts empty while the protected key still authenticates. No prompt persistence or logging was added.
+- Ticket 04 is resolved and ready for human acceptance. All 20 controlled checks pass with warnings treated as errors at the previously confirmed desktop/HTTP boundaries, including actual Windows tray/overflow restoration and pending-request lifecycle. The [ticket 04 review](current-prompt-session-review.md) uses pre-implementation baseline `0beca54` (proposed to the user; no alternative supplied). Tickets 05 and 06 remain outside this implementation request.
 
 ## Approved tickets
 
@@ -67,4 +68,4 @@
 - Consolidated spec is in spec.md; shared understanding confirmed by the user.
 - At interview completion, the user requested no action on the spec. The later implement request supplied the instruction to begin ticket 01.
 
-Interview complete. Later implement requests authorized tickets 01-03; all three are complete. Other tickets retain their own scope and prerequisites.
+Interview complete. Later implement requests authorized tickets 01-04; all four are complete. Other tickets retain their own scope and prerequisites.
