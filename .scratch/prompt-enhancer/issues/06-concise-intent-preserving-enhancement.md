@@ -2,11 +2,12 @@
 
 Type: task
 Status: ready-for-agent
+Execution: claimed
 Blocked by: 01 (Enhance a rough prompt through OpenRouter)
 
 **What to build:** Refine the actual enhancement behavior and choose the initial OpenRouter model so the user's rough prompts become concise, clear English prompts with useful essential additions and preserved intent.
 
-**Execution:** Implementation remains on hold until the user explicitly instructs it to begin. Ticket approval authorizes publication only.
+**Execution:** Implementation explicitly authorized by the user's implement request on 2026-11-08.
 
 - [ ] Grammar, wording, and organization improve while preserving the user's goal and explicitly stated constraints.
 - [ ] Add essential supporting details when needed, but do not introduce unnecessary requirements, invented facts, or clarification questions.

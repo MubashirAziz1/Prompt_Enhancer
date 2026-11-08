@@ -466,9 +466,8 @@ namespace PromptEnhancer.Tests
                     Application.DoEvents();
                     TestRunner.Control<TextBox>(window, "RoughPrompt").Text = rough;
                     TestRunner.Control<Button>(window, "Enhance").PerformClick();
-                    TestRunner.Require(replacement.SubmittedPrompt == rough && replacement.Policy.Contains("Never ask clarification questions") &&
-                        replacement.Policy.Contains("preserving intent") && replacement.Policy.Contains("essential supporting details"),
-                        "A replacement integration must receive the submitted prompt and baseline policy without desktop changes.");
+                    TestRunner.Require(replacement.SubmittedPrompt == rough && replacement.Policy == EnhancementPolicy.Instructions,
+                        "A replacement integration must receive the submitted prompt and complete enhancement policy without desktop changes.");
                     TestRunner.Require(!TestRunner.Control<Button>(window, "Enhance").Enabled &&
                         !TestRunner.Control<Button>(window, "Settings").Enabled &&
                         TestRunner.Control<Label>(window, "Status").Text == "Enhancing...",

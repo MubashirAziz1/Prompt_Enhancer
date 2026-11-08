@@ -111,11 +111,22 @@ Test credentials use unique directories under
 `build\test-data` and are deleted after each check; the production credential path
 is never used. No external packages or test framework downloads are needed.
 
-The initial configuration is `openai/gpt-4.1-mini`, temperature 0.2, 2048 output
-tokens, and a 60-second timeout using non-streaming OpenRouter chat completions.
-This is an initial supported model, not a completed quality/latency evaluation;
-ticket 06 owns that work. Model configuration lives in `OpenRouterProvider` and
-`Program`; the baseline English rewrite instructions live in `EnhancementPolicy`.
+The selected configuration is `openai/gpt-4.1`, temperature 0.2, 2048 maximum
+output tokens, and a 60-second timeout using non-streaming OpenRouter chat
+completions. Enhancement rewrites the request rather than carrying it out,
+preserves stated constraints and unresolved references, and adds only essential
+task details. Simple requests stay short; structure follows complexity, without
+mandatory headings or added length limits. Instructions live in the provider-neutral
+`EnhancementPolicy`; model and HTTP configuration remain in `OpenRouterProvider`
+and `Program`. The token ceiling is a transport limit, not a requested output length.
+
+Ticket 06 evaluated ten non-sensitive examples through the actual editor and
+Enhance action with a configured account. GPT-4.1 preserved intent in all ten
+observed results, with 1.45-2.44 seconds end-to-end latency (1.68-second median)
+and $0.00854 total API-reported usage cost. GPT-4.1 Mini was cheaper but altered
+background facts and quoted text in the comparison run. This small sample does
+not guarantee future outputs. See the [evaluation and limitations](.scratch/prompt-enhancer/enhancement-evaluation.md)
+and [model decision](docs/adr/0002-intent-preserving-enhancement-model.md).
 
 The desktop receives an `IEnhancementProvider` and an `ICredentialStore` through
 its constructor. Provider authentication, HTTP requests, JSON responses, and
@@ -123,8 +134,19 @@ failure mapping are isolated in `OpenRouterProvider`. Replace that integration
 in `Program` to use the same desktop workflow and enhancement policy with another
 provider. See [the framework and security decision](docs/adr/0001-windows-desktop-and-provider-boundary.md).
 
-A live check is optional: configure your own account in Settings and submit a
-non-sensitive prompt, for example `write email boss tomorrow leave personal work short`.
+A live check uses your own account configured in Settings. Submit a non-sensitive
+prompt, for example `write email boss tomorrow leave personal work short`.
 It should produce a concise request for an email, without writing the email itself.
-No real credential is supplied by the project, and automated checks must not call
-OpenRouter or incur charges.
+To repeat the fixed ten-example evaluation with numeric token/cost telemetry:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\evaluate.ps1 -Live
+```
+
+This manual command opens the real editor and makes ten paid requests using the
+saved credential. It prints the fixed examples, results, latency, and numeric
+usage metadata to the console; it does not write a prompt history or change the
+credential or clipboard. It refuses to run without `-Live`. Leave the evaluation
+editor alone while it runs. Missing usage metadata is reported as null or omitted,
+not as zero cost. No credential is supplied by the project, and automated
+`check.ps1` checks never call OpenRouter or incur charges.

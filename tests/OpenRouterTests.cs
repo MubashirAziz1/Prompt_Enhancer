@@ -74,7 +74,7 @@ namespace PromptEnhancer.Tests
                         request.Headers.Authorization.Parameter == TestRunner.TestKey, "Authenticate using the saved key.");
                     TestRunner.Require(request.Content.Headers.ContentType.MediaType == "application/json", "Send JSON content.");
                     var body = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(await request.Content.ReadAsStringAsync());
-                    TestRunner.Require((string)body["model"] == "openai/gpt-4.1-mini" && !(bool)body["stream"], "Use the initial model without streaming.");
+                    TestRunner.Require((string)body["model"] == "openai/gpt-4.1" && !(bool)body["stream"], "Use the selected model without streaming.");
                     var messages = (System.Collections.ArrayList)body["messages"];
                     TestRunner.Require(messages.Count == 2, "Send only the policy and submitted prompt, without history.");
                     var system = (Dictionary<string, object>)messages[0];

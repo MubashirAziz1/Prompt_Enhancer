@@ -13,7 +13,7 @@ namespace PromptEnhancer
 {
     public sealed class OpenRouterProvider : IEnhancementProvider
     {
-        public const string InitialModel = "openai/gpt-4.1-mini";
+        public const string InitialModel = "openai/gpt-4.1";
         private static readonly Uri Endpoint = new Uri("https://openrouter.ai/api/v1/chat/completions");
         private readonly HttpClient client;
         private readonly ICredentialStore credentials;
