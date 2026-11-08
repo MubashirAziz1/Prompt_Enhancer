@@ -40,6 +40,8 @@
 - Ticket 03 is resolved and ready for human acceptance. Commit `61d0331` completes Windows acceptance and fixes minimize/reopen state and size restoration. The final [ticket 03 implementation review](draggable-widget-review.md) reports zero Standards findings and zero Spec findings. Ticket 04 is unblocked; its implementation still requires its own user authorization.
 - The user explicitly authorized [ticket 04](issues/04-current-prompt-session.md) on 2026-11-08. Commit `540184e` adds Clear, Hide, tray restoration, and Quit; `d4c81cf` shares native tray test steps after review. Closing/minimizing/hiding preserve current prompts. Clear permits a fresh task; Quit cancels pending work and exits. Fresh-process relaunch starts empty while the protected key still authenticates. No prompt persistence or logging was added.
 - Ticket 04 is resolved and ready for human acceptance. All 20 controlled checks pass with warnings treated as errors at the previously confirmed desktop/HTTP boundaries, including actual Windows tray/overflow restoration and pending-request lifecycle. The [ticket 04 review](current-prompt-session-review.md) uses pre-implementation baseline `0beca54` (proposed to the user; no alternative supplied). Tickets 05 and 06 remain outside this implementation request.
+- The user explicitly authorized [ticket 05](issues/05-recover-cloud-failures.md) on 2026-11-08. Commit `b758787` adds explicit Retry feedback, timeout-specific guidance, and credential classification for malformed saved keys. Failures preserve the rough prompt, keep errors outside copyable results, and allow Settings correction followed by retry with current input and credentials.
+- Ticket 05 is resolved and ready for human acceptance. Warnings-as-errors compilation and all 33 controlled checks pass, including 13 recovery checks covering authentication, connectivity, a real HttpClient timeout, provider errors, and unusable responses followed by success. The [ticket 05 review](cloud-failure-recovery-review.md), against baseline `baba548`, reports zero Standards and zero Spec findings. Verification used isolated build output because the user's running app locks the default executable; that app and the user's preexisting `.gitignore` changes were left untouched. Ticket 06 remains outside this request.
 
 ## Approved tickets
 
@@ -68,4 +70,4 @@
 - Consolidated spec is in spec.md; shared understanding confirmed by the user.
 - At interview completion, the user requested no action on the spec. The later implement request supplied the instruction to begin ticket 01.
 
-Interview complete. Later implement requests authorized tickets 01-04; all four are complete. Other tickets retain their own scope and prerequisites.
+Interview complete. Later implement requests authorized tickets 01-05; all five are complete. Other tickets retain their own scope and prerequisites.
