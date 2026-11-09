@@ -9,7 +9,7 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
-    <ApplicationManifest>../winui/app.manifest</ApplicationManifest>
+    <ApplicationManifest>../src/app.manifest</ApplicationManifest>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -17,11 +17,11 @@
     <BaseOutputPath>../build/winui-tests/</BaseOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="legacy/**/*.cs" />
+    <Compile Remove="fixtures/**/*.cs" />
     <Page Remove="TestApp.xaml" />
     <ApplicationDefinition Include="TestApp.xaml" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9457" />
-    <ProjectReference Include="../winui/PromptEnhancer.WinUI.csproj" />
+    <ProjectReference Include="../src/PromptEnhancer.WinUI.csproj" />
   </ItemGroup>
 </Project>

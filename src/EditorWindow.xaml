@@ -1,7 +1,7 @@
 <Window x:Class="PromptEnhancer.WinUI.EditorWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Prompt Enhancer — WinUI migration editor">
+    Title="Prompt Enhancer">
     <Grid x:Name="Root" Padding="24" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <ScrollViewer x:Name="Viewport" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
             <Grid Height="{Binding ActualHeight, ElementName=Viewport}" MinHeight="620" RowSpacing="16">
@@ -39,9 +39,16 @@
                          TextWrapping="Wrap" FontSize="15" MaxLength="32000" TabIndex="4" TextChanging="ResultChanging"
                          AutomationProperties.AutomationId="EnhancedPrompt" AutomationProperties.Name="Enhanced prompt"
                          ScrollViewer.VerticalScrollBarVisibility="Auto" />
-                <Button x:Name="CopyButton" Grid.Row="4" Content="Copy" Click="Copy" HorizontalAlignment="Right"
+                <Grid Grid.Row="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="ClearButton" Content="Clear" Click="Clear" TabIndex="6" AutomationProperties.AutomationId="Clear" />
+                    <Button Content="Hide" Click="Hide" TabIndex="7" AutomationProperties.AutomationId="Hide" />
+                    <Button Content="Quit" Click="Quit" TabIndex="8" AutomationProperties.AutomationId="Quit" />
+                </StackPanel>
+                <Button x:Name="CopyButton" Content="Copy" Click="Copy" HorizontalAlignment="Right"
                         IsEnabled="False" MinWidth="128" TabIndex="5" AutomationProperties.AutomationId="Copy"
                         AutomationProperties.Name="Copy enhanced prompt" />
+                </Grid>
                 <StackPanel Grid.Row="5" Spacing="8">
                     <ProgressBar x:Name="Progress" IsIndeterminate="True" Visibility="Collapsed"
                                  AutomationProperties.Name="Enhancing" AutomationProperties.AutomationId="Progress" />

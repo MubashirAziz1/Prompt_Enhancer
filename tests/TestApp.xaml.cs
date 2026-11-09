@@ -18,15 +18,46 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // Keep the test host alive after the application windows exercise Quit.
+        var hostWindow = new Window();
+        hostWindow.Activate();
+        hostWindow.AppWindow.Hide();
+        if (Environment.GetCommandLineArgs() is [_, "--live-evaluation"])
+        {
+            Environment.Exit(await LiveEvaluation());
+            return;
+        }
         string directory = Path.Combine(AppContext.BaseDirectory, "test-data", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
         int exit = 0;
         ClipboardFixture clipboard = null;
         try
         {
             var arguments = Environment.GetCommandLineArgs();
+            if (arguments.Length == 4 && arguments[1] == "--floating-process")
+            {
+                await FloatingProcess(arguments[2], arguments[3]);
+                return;
+            }
+            Directory.CreateDirectory(directory);
             bool reuse = arguments.Length == 3 && arguments[1] == "--credential-reuse";
             string only = arguments.Length == 3 && arguments[1] == "--only" ? arguments[2] : "All";
+            if (!reuse && (only == "All" || only == "OpenRouter"))
+            {
+                var providerChecks = new List<KeyValuePair<string, Action>>();
+                PromptEnhancer.Tests.OpenRouterTests.Register(providerChecks);
+                foreach (var check in providerChecks)
+                {
+                    await Task.Run(check.Value);
+                    checks.Add("PASS " + check.Key);
+                }
+                if (only == "OpenRouter")
+                {
+                    File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
+                    Directory.Delete(directory, true);
+                    Environment.Exit(0);
+                    return;
+                }
+            }
             clipboard = reuse ? null : new ClipboardFixture();
             if (clipboard != null)
             {
@@ -48,38 +79,46 @@ public partial class App : Application
             await Until(() => Find<Button>("Enhance").IsEnabled);
             Require(Find<TextBox>("EnhancedPrompt").Text == "Write a short email.", "Enhance must display the HTTP completion in the actual WinUI editor.");
             Require(Find<Button>("Copy").IsEnabled, "A completed result must be available for Copy.");
-            if (reuse) return;
-            Require(await ClipboardFixture.Text() == ClipboardFixture.Sentinel, "Launching and enhancing must not change the clipboard.");
-            checks.Add("PASS Legacy protected key loads and enhances in WinUI with exact HTTP configuration");
-            if (only == "All" || only == "Settings")
+            if (!reuse)
             {
-                Invoke("Settings");
-                await Until(() => Elements().OfType<PasswordBox>().Any());
-                Require(Find<PasswordBox>("ApiKey").Password == "", "Reopened Settings must never reveal the saved key.");
-                Find<PasswordBox>("ApiKey").Password = "replacement-fixture-key";
-                InvokeDialog("Save");
-                await SettingsClosed();
-                Require(credentials.Load() == "replacement-fixture-key", "Settings must replace the isolated protected credential.");
-                await SettingsCompatibility(credentials, path);
-                checks.Add("PASS Settings preserves blank Save/Cancel, rejects invalid input, replaces safely, and reopens blank");
-                await Probe("read", path, "replacement-fixture-key");
-                await FreshWinUIProcess(path);
-                checks.Add("PASS Replacement works in fresh .NET Framework and WinUI processes");
+                Require(await ClipboardFixture.Text() == ClipboardFixture.Sentinel, "Launching and enhancing must not change the clipboard.");
+                checks.Add("PASS Legacy protected key loads and enhances in WinUI with exact HTTP configuration");
+                if (only == "All" || only == "Settings")
+                {
+                    Invoke("Settings");
+                    await Until(() => Elements().OfType<PasswordBox>().Any());
+                    Require(Find<PasswordBox>("ApiKey").Password == "", "Reopened Settings must never reveal the saved key.");
+                    Find<PasswordBox>("ApiKey").Password = "replacement-fixture-key";
+                    InvokeDialog("Save");
+                    await SettingsClosed();
+                    Require(credentials.Load() == "replacement-fixture-key", "Settings must replace the isolated protected credential.");
+                    await SettingsCompatibility(credentials, path);
+                    checks.Add("PASS Settings preserves blank Save/Cancel, rejects invalid input, replaces safely, and reopens blank");
+                    await Probe("read", path, "replacement-fixture-key");
+                    await FreshWinUIProcess(path);
+                    checks.Add("PASS Replacement works in fresh .NET Framework and WinUI processes");
+                }
+                Require(await ClipboardFixture.Text() == ClipboardFixture.Sentinel, "Settings and relaunch must not change the clipboard.");
+                transport.ExpectedKey = credentials.Load();
+                if (only == "All" || only == "Session") await ClearWorkflow(transport);
+                if (only == "All" || only == "Workflow")
+                {
+                    await ClipboardWorkflow(transport);
+                    checks.Add("PASS Explicit Paste, native Ctrl+V, busy state, edited Copy, and clipboard retry");
+                }
+                if (only == "All" || only == "Recovery") await RecoveryWorkflows(directory);
+                if (only == "All" || only == "Appearance")
+                {
+                    await ReplacementWorkflow(credentials);
+                    await AppearanceWorkflow();
+                }
+                if (only == "All" || only == "Session")
+                {
+                    await FloatingSession(credentials);
+                    await FreshFloatingProcesses(path);
+                }
+                File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
             }
-            Require(await ClipboardFixture.Text() == ClipboardFixture.Sentinel, "Settings and relaunch must not change the clipboard.");
-            transport.ExpectedKey = credentials.Load();
-            if (only == "All" || only == "Workflow")
-            {
-                await ClipboardWorkflow(transport);
-                checks.Add("PASS Explicit Paste, native Ctrl+V, busy state, edited Copy, and clipboard retry");
-            }
-            if (only == "All" || only == "Recovery") await RecoveryWorkflows(directory);
-            if (only == "All" || only == "Appearance")
-            {
-                await ReplacementWorkflow(credentials);
-                await AppearanceWorkflow();
-            }
-            File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
         }
         catch (Exception error)
         {
@@ -96,8 +135,9 @@ public partial class App : Application
                 File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
             }
             editor?.Close();
-            Directory.Delete(directory, true);
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
         }
+        GC.KeepAlive(hostWindow);
         Environment.Exit(exit);
     }
 

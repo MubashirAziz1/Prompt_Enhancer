@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
+using System.Text.Json;
 
 namespace PromptEnhancer.Tests
 {
@@ -73,17 +73,17 @@ namespace PromptEnhancer.Tests
                     TestRunner.Require(request.Headers.Authorization.Scheme == "Bearer" &&
                         request.Headers.Authorization.Parameter == TestRunner.TestKey, "Authenticate using the saved key.");
                     TestRunner.Require(request.Content.Headers.ContentType.MediaType == "application/json", "Send JSON content.");
-                    var body = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(await request.Content.ReadAsStringAsync());
-                    TestRunner.Require((string)body["model"] == "openai/gpt-4.1" && !(bool)body["stream"], "Use the selected model without streaming.");
-                    var messages = (System.Collections.ArrayList)body["messages"];
-                    TestRunner.Require(messages.Count == 2, "Send only the policy and submitted prompt, without history.");
-                    var system = (Dictionary<string, object>)messages[0];
-                    var user = (Dictionary<string, object>)messages[1];
-                    TestRunner.Require((string)system["role"] == "system" && (string)system["content"] == policy,
+                    using var document = JsonDocument.Parse(await request.Content.ReadAsStringAsync()); var body = document.RootElement;
+                    TestRunner.Require(body.GetProperty("model").GetString() == "openai/gpt-4.1" && !body.GetProperty("stream").GetBoolean(), "Use the selected model without streaming.");
+                    var messages = body.GetProperty("messages");
+                    TestRunner.Require(messages.GetArrayLength() == 2, "Send only the policy and submitted prompt, without history.");
+                    var system = messages[0];
+                    var user = messages[1];
+                    TestRunner.Require(system.GetProperty("role").GetString() == "system" && system.GetProperty("content").GetString() == policy,
                         "The enhancement policy must be a separate system message.");
-                    TestRunner.Require((string)user["role"] == "user" && (string)user["content"] == prompt,
+                    TestRunner.Require(user.GetProperty("role").GetString() == "user" && user.GetProperty("content").GetString() == prompt,
                         "Preserve all submitted text, including quotes, newlines, and Unicode.");
-                    TestRunner.Require(!body.ContainsKey("api_key"), "The credential belongs in authentication, not the request body.");
+                    TestRunner.Require(!body.TryGetProperty("api_key", out _), "The credential belongs in authentication, not the request body.");
                     return TestRunner.Completion("Compare these two laptops for programming.");
                 } })
                 using (var client = new HttpClient(transport))

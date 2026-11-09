@@ -10,13 +10,24 @@
 
 ## Decisions so far
 
+- 2026-11-09: The user requested WinUI only. [Ticket 03](issues/03-consolidate-winui-only.md)
+  supersedes the earlier fallback requirement: consolidate application and checks
+  under `src/` and `tests/`, retire the Windows Forms app, and use one set of
+  build/check/run commands. Resolved: compilation and full published WinUI
+  acceptance passed; see [verification](verification.md#ticket-03-verification).
+  Previous fallback decisions below are historical.
+
+- 2026-11-08: [Ticket 02](issues/02-complete-floating-experience-and-cutover.md)
+  is resolved and ready for human review. The floating experience is complete, `scripts/run.ps1` now
+  launches WinUI, and the Windows Forms version is retained as
+  `scripts/run-winforms.ps1`. See [Ticket 02 verification](verification.md#ticket-02-verification).
+
 - 2026-11-08: [Ticket 01](issues/01-migrate-enhancement-workflow-to-winui3.md)
   is resolved and ready for human review. The independent WinUI migration editor
   passes 26 checks; all 33 retained Windows Forms checks pass. Standards and spec
   reviews found no actionable issues. [Verification](verification.md) records
   build setup, credential compatibility, recovery, clipboard restoration, and
-  actual 150% display-scale conditions. Ticket 02 remains on hold, and Windows
-  Forms remains the normal application.
+  actual 150% display-scale conditions. Ticket 02 has since been completed (see above).
 
 - 2026-11-08: The user explicitly invoked implement for ticket 01. Ticket 01 is
   claimed, including its required stable build-tool installation. Ticket 02

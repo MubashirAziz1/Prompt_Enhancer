@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using PromptEnhancer;
 
-// Compiled with the retained application's .NET Framework compiler and exact
+// Compiled independently with the .NET Framework compiler and exact
 // credential sources, independently of the WinUI runtime. No production path.
 internal static class CredentialProbe
 {
@@ -10,7 +10,9 @@ internal static class CredentialProbe
     {
         if (args.Length != 3) return 2;
         string path = Path.GetFullPath(args[1]);
-        string build = Path.GetFullPath(Path.GetDirectoryName(typeof(CredentialProbe).Assembly.Location)) + Path.DirectorySeparatorChar;
+        string directory = Path.GetDirectoryName(typeof(CredentialProbe).Assembly.Location);
+        if (Path.GetFileName(directory) == "fixtures") directory = Path.GetDirectoryName(directory);
+        string build = Path.GetFullPath(directory) + Path.DirectorySeparatorChar;
         if (!path.StartsWith(build, StringComparison.OrdinalIgnoreCase)) return 2;
         try
         {

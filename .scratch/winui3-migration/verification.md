@@ -103,3 +103,93 @@ implemented within the agreed scope. Ticket 02 behavior remains deferred, and
 verification limitations are documented.
 
 Standards: 0 actionable findings. Spec: 0 actionable findings.
+
+
+# Ticket 02 verification
+
+Date: 2026-11-08. Implementation was authorized by the user's request to fix all
+review findings and deliver a working application end to end.
+
+## Changes made after the independent review
+
+- **Startup robustness:** `App.OnLaunched` is wrapped, so startup failures show a
+  message box and exit; a last-resort `UnhandledException` handler does the same.
+  The notification icon is added with retry (Explorer not ready) and re-added with
+  retry after `TaskbarCreated`; failures there no longer crash the process.
+- **Single instance:** a named mutex prevents a second button/tray icon. A second
+  launch signals the first (named event) to bring back its floating button.
+- **Paste cap:** Paste is limited to the rough prompt's 32,000-character maximum
+  (surrogate-safe) and says so in the status line; a new check covers it.
+- **No show-then-resize flash:** launcher and editor are sized and placed before
+  first show, using the monitor DPI; placement is re-clamped after DPI changes.
+- **Launcher size:** `WM_GETMINMAXINFO` lowers the system minimum so the button is
+  the intended 84×64 logical pixels (previously about 132 wide); checked at 150%.
+- **Focus:** after Enhance, focus returns to the result (success) or Retry (failure).
+- **Tray:** double-click no longer hides an editor that is open and in use; the menu
+  opens at the notification anchor (works from the keyboard); own application icon
+  (`winui/app.ico`) in the tray and executable.
+- **Context menu:** opens at the pointer; drag threshold is DPI-aware.
+- **Interop:** `SetLastError = true` on the `DllImport`s that throw `Win32Exception`.
+- **Quit with Settings open:** the dialog is hidden as the editor closes.
+- **Cutover:** `scripts/run.ps1` builds and launches WinUI; `run-winforms.ps1` is the
+  fallback; README and development guide updated.
+
+## Final results
+
+- `scripts/build-winui.ps1`: warnings treated as errors, 0 warnings, 0 errors.
+- `scripts/check-published-winui.ps1` (clean test build): **40 PASS results, 0
+  failures** from the published test host: Settings/credential compatibility,
+  17 recovery cases, explicit Paste/Ctrl+V/Copy (including the oversized-paste cap),
+  appearance, floating drag/click, title-bar movement, stacking over a companion
+  editor, close/minimize collapse, Hide, real tray menu/double-click (through
+  overflow), hidden completion, Quit cancellation, and three fresh-process
+  Quit/relaunch scenarios. The production executable then started from the
+  published folder with app-local `coreclr.dll`, `Microsoft.ui.xaml.dll`, and
+  `Microsoft.WindowsAppRuntime.dll`; a second launch handed off and exited; the
+  floating startup and complete Quit check passed.
+- `scripts/check.ps1` (retained Windows Forms fallback): **33/33 passed**. The
+  Windows Forms source files are unchanged.
+- The production application was launched with `scripts/run.ps1`; its floating
+  button was visible, topmost, at the top-right of the 1920×1080 (150%) display,
+  and the notification icon appeared in the tray overflow.
+
+## Conditions and limitations
+
+- Actual display: 1920×1080 at 150%, text scale 1.00, Windows 11 build 26200.
+  Other monitor DPIs and live theme/accent changes were not exercised.
+- The native-input checks drive the real mouse and keyboard and can fail
+  spuriously if the desktop is touched while they run. During this work a few runs
+  failed on a single input step (drag, right-click, tray probe, or a Windows Forms
+  desktop step) and passed on rerun without code changes; the right-click check now
+  waits for the asynchronous flyout. A stale `App.xbf` in an old test output
+  directory once failed the identical-asset comparison; a clean test build fixed it.
+- Touch long-press does not open the floating button's context menu; keyboard
+  (Menu key / Shift+F10), mouse right-click, and the tray menu do.
+- The VC++ v14 x64 redistributable remains a native prerequisite, as documented.
+- Controlled responses prove workflow and transport behavior, not live model quality.
+- The work is not committed; it remains in the working tree for review.
+
+## Ticket 03 verification
+
+2026-11-09: The user requested WinUI only, superseding the retained fallback.
+The sole application is now in `src/`, and its WinUI host and provider checks
+are in `tests/`. The prior `winui/`, `winui-tests/`, and `evaluation/` source roots,
+Windows Forms application, duplicate entry scripts, and old Framework application
+executables have been removed. Test-only Framework probes live in
+`tests/fixtures/`. Existing in-progress WinUI work was preserved; the provider,
+enhancement policy, and credential core were not modified.
+
+- `scripts/build.ps1 -Tests`: passed with warnings treated as errors.
+- `scripts/check-published-winui.ps1`: passed the full controlled WinUI suite,
+  provider contract checks, identical published application assembly and markup
+  comparison, app-local .NET/WinUI runtime checks, second-launch handoff,
+  production floating startup, and full Quit.
+- The first full run failed to acquire the clipboard for the busy-clipboard test
+  and could not verify restoration. The complete suite passed on retry without
+  changes to the clipboard test, including original clipboard restoration.
+- Manual paid evaluation was ported to the WinUI test host and remains opt-in
+  through `scripts/evaluate.ps1 -Live`; no paid evaluation or production-key
+  access was performed during this cleanup.
+
+Earlier fallback procedures and source-path references in this file record
+historical verification; current commands are in README and the development guide.

@@ -2,7 +2,12 @@
 
 Status: ready-for-agent
 State: Consolidated shared understanding confirmed by the user.
-Execution: Ticket 01 resolved on 2026-11-08; ticket 02 remains on hold. Earlier publication-stage hold statements below are historical. See verification.md.
+Execution: Tickets 01 and 02 resolved. Ticket 03 consolidates the completed WinUI application. Earlier publication-stage hold statements below are historical. See verification.md.
+
+2026-11-09 amendment: The user requested WinUI only. The earlier requirement to
+retain a Windows Forms fallback is superseded. The application lives in `src/`,
+its WinUI checks in `tests/`, and the default build/check/run commands target
+WinUI. See [ticket 03](issues/03-consolidate-winui-only.md).
 
 ## Problem Statement
 

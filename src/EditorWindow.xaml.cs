@@ -13,20 +13,28 @@ public sealed partial class EditorWindow : Window
     private readonly CancellationTokenSource lifetime = new();
     private bool busy;
     private bool closed;
+    private bool initialized;
+    private double sizedScale;
     private SettingsDialog activeSettings;
+    public event Action HideRequested;
+    public event Action QuitRequested;
 
     public EditorWindow(IEnhancementProvider provider, ICredentialStore credentials)
     {
         this.provider = provider;
         this.credentials = credentials;
         InitializeComponent();
+        ((OverlappedPresenter)AppWindow.Presenter).IsAlwaysOnTop = true;
         Root.ActualThemeChanged += (_, _) => UpdateWindowTheme();
         UpdateWindowTheme();
+        // Size before the first show; correct it on load only if the real scale differs.
+        SizeForScale(NativeMetrics.Scale(this));
         Root.Loaded += (_, _) =>
         {
+            if (initialized) return;
+            initialized = true;
             double scale = Root.XamlRoot.RasterizationScale;
-            var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
-            AppWindow.Resize(new SizeInt32(Math.Min((int)(780 * scale), area.Width), Math.Min((int)(850 * scale), area.Height)));
+            if (Math.Abs(scale - sizedScale) > 0.01) SizeForScale(scale);
             try
             {
                 if (!string.IsNullOrWhiteSpace(credentials.Load())) Status.Text = "Ready. Saved API key available.";
@@ -37,12 +45,36 @@ public sealed partial class EditorWindow : Window
         Closed += (_, _) =>
         {
             closed = true;
+            try { activeSettings?.Hide(); } catch { } // Quit while Settings is open.
             lifetime.Cancel();
             lifetime.Dispose();
         };
     }
 
+    private void SizeForScale(double scale)
+    {
+        sizedScale = scale;
+        var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
+        AppWindow.Resize(new SizeInt32(Math.Min((int)(780 * scale), area.Width), Math.Min((int)(850 * scale), area.Height)));
+        AppWindow.Move(new PointInt32(
+            Math.Clamp(AppWindow.Position.X, area.X, area.X + Math.Max(0, area.Width - AppWindow.Size.Width)),
+            Math.Clamp(AppWindow.Position.Y, area.Y, area.Y + Math.Max(0, area.Height - AppWindow.Size.Height))));
+    }
+
     private void ResultChanging(TextBox sender, TextBoxTextChangingEventArgs args) => UpdateActions();
+
+    private void Clear(object sender, RoutedEventArgs args)
+    {
+        if (busy || closed) return;
+        RoughPrompt.Text = EnhancedPrompt.Text = "";
+        EnhanceButton.Content = "Enhance";
+        Status.Text = "Cleared. Enter a rough prompt to begin.";
+        RoughPrompt.Focus(FocusState.Programmatic);
+        UpdateActions();
+    }
+
+    private void Hide(object sender, RoutedEventArgs args) => HideRequested?.Invoke();
+    private void Quit(object sender, RoutedEventArgs args) => QuitRequested?.Invoke();
 
     private void UpdateWindowTheme()
     {
@@ -75,12 +107,13 @@ public sealed partial class EditorWindow : Window
         if (busy || closed) return;
         if (string.IsNullOrWhiteSpace(RoughPrompt.Text)) { Status.Text = "Enter a rough prompt first."; return; }
         busy = true;
-        EnhanceButton.IsEnabled = SettingsButton.IsEnabled = RoughPrompt.IsEnabled = PasteButton.IsEnabled = EnhancedPrompt.IsEnabled = false;
+        EnhanceButton.IsEnabled = SettingsButton.IsEnabled = RoughPrompt.IsEnabled = PasteButton.IsEnabled = EnhancedPrompt.IsEnabled = ClearButton.IsEnabled = false;
         EnhanceButton.Content = "Enhance";
         EnhancedPrompt.Text = "";
         UpdateActions();
         Progress.Visibility = Visibility.Visible;
         Status.Text = "Enhancing…";
+        bool succeeded = false;
         try
         {
             string result = await provider.EnhanceAsync(RoughPrompt.Text, EnhancementPolicy.Instructions, lifetime.Token);
@@ -88,6 +121,7 @@ public sealed partial class EditorWindow : Window
             if (string.IsNullOrWhiteSpace(result)) throw new EnhancementException(EnhancementFailure.InvalidResponse);
             EnhancedPrompt.Text = result;
             Status.Text = "Enhanced prompt ready. Review, edit, then Copy.";
+            succeeded = true;
         }
         catch (EnhancementException error) { ShowFailure(error.Message); }
         catch (CredentialException error) { ShowFailure(error.Message); }
@@ -97,9 +131,11 @@ public sealed partial class EditorWindow : Window
             if (!closed)
             {
                 busy = false;
-                EnhanceButton.IsEnabled = SettingsButton.IsEnabled = RoughPrompt.IsEnabled = PasteButton.IsEnabled = EnhancedPrompt.IsEnabled = true;
+                EnhanceButton.IsEnabled = SettingsButton.IsEnabled = RoughPrompt.IsEnabled = PasteButton.IsEnabled = EnhancedPrompt.IsEnabled = ClearButton.IsEnabled = true;
                 Progress.Visibility = Visibility.Collapsed;
                 UpdateActions();
+                // Disabling the controls dropped keyboard focus; put it where the user continues.
+                if (AppWindow.IsVisible) (succeeded ? EnhancedPrompt : (Control)EnhanceButton).Focus(FocusState.Programmatic);
             }
         }
     }
@@ -122,9 +158,19 @@ public sealed partial class EditorWindow : Window
             if (!content.Contains(StandardDataFormats.Text)) { Status.Text = "The clipboard has no text to paste."; return; }
             string text = await content.GetTextAsync();
             if (closed || busy) return;
+            // SelectedText bypasses MaxLength; apply the same limit as typing and Ctrl+V.
+            int room = Math.Max(0, RoughPrompt.MaxLength - (RoughPrompt.Text.Length - RoughPrompt.SelectionLength));
+            bool truncated = text.Length > room;
+            if (truncated)
+            {
+                text = text.Substring(0, room);
+                if (text.Length > 0 && char.IsHighSurrogate(text[^1])) text = text.Substring(0, text.Length - 1);
+            }
             RoughPrompt.SelectedText = text;
             RoughPrompt.Focus(FocusState.Programmatic);
-            Status.Text = "Pasted into the rough prompt.";
+            Status.Text = truncated
+                ? $"Pasted the first part only. The rough prompt is limited to {RoughPrompt.MaxLength:N0} characters."
+                : "Pasted into the rough prompt.";
         }
         catch { if (!closed) Status.Text = "The clipboard is busy. Try Paste again."; }
     }

@@ -1,6 +1,14 @@
 # Migrate the interface to WinUI 3 with self-contained folder deployment
 
-Status: accepted. Ticket 01 implemented and verified on 2026-11-08; ticket 02 remains on hold. Hold statements below record the earlier design stage.
+Status: accepted. Tickets 01 and 02 implemented and verified. On 2026-11-09 the
+user requested WinUI only, superseding the fallback requirement below.
+
+The supported application now lives in `src/`, with one WinUI test host in
+`tests/`. The Windows Forms application and its build/run paths are retired.
+`build.ps1`, `check.ps1`, and `run.ps1` all target WinUI. Framework probes under
+`tests/fixtures/` serve only native desktop automation and independent protected
+credential compatibility checks. The earlier fallback and hold statements below
+record the migration history, rather than current requirements.
 
 The user chose WinUI 3 to give Prompt Enhancer a modern native Fluent appearance
 while preserving its existing enhancement workflow and desktop behavior. Keep

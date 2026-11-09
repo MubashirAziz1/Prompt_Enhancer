@@ -50,8 +50,7 @@ public partial class App
 
     private static async Task Probe(string action, string path, string key)
     {
-        var info = new ProcessStartInfo(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "CredentialProbe.exe"))) { UseShellExecute = false, CreateNoWindow = true };
+        var info = new ProcessStartInfo(FixtureExecutable("CredentialProbe.exe")) { UseShellExecute = false, CreateNoWindow = true };
         info.ArgumentList.Add(action);
         info.ArgumentList.Add(path);
         info.ArgumentList.Add(key);

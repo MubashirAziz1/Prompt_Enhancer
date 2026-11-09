@@ -61,17 +61,30 @@ public partial class App
         }
         await CopyResult();
         Require(await ClipboardFixture.Text() == "Edited result for copying.", "Copy must succeed after the clipboard is released.");
+
+        // An oversized clipboard must obey the editor's limit rather than reaching the provider unchecked.
+        string oversized = new string('x', rough.MaxLength + 500);
+        await ClipboardFixture.SetText(oversized);
+        rough.Text = "keep";
+        Invoke("Paste");
+        await Until(() => Find<TextBlock>("Status").Text.Contains("limited"));
+        Require(rough.Text.Length == rough.MaxLength,
+            "Paste must be capped at the rough prompt's maximum length.");
+        Require(await ClipboardFixture.Text() == oversized, "A capped Paste must not write the clipboard.");
+        await ClipboardFixture.SetText("Edited result for copying.");
     }
 
     private async Task CopyResult()
     {
         NativeDesktop.Activate(editor);
+        string expected = Find<TextBox>("EnhancedPrompt").Text;
         for (int attempt = 0; attempt < 20; attempt++)
         {
             Invoke("Copy");
             await Task.Delay(50);
-            if (Find<TextBlock>("Status").Text.Contains("copied")) return;
-            Require(Find<TextBlock>("Status").Text.Contains("busy"), "An unsuccessful Copy must explain retryable clipboard contention.");
+            string status = Find<TextBlock>("Status").Text;
+            if (status.Contains("copied") && await ClipboardFixture.Text() == expected) return;
+            Require(status.Contains("busy") || status.Contains("copied"), "An unsuccessful Copy must explain retryable clipboard contention.");
         }
         throw new Exception("Copy did not recover from clipboard contention.");
     }

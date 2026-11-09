@@ -1,21 +1,23 @@
 # Prompt Enhancer
 
-WinUI migration development is available separately; see
-[WinUI build, checks, and editor launch](docs/winui-development.md).
-The normal launch command below continues to use Windows Forms during ticket 01.
+A native Windows 11 x64 WinUI 3 application for rewriting rough English prompts.
+It provides a draggable floating launcher, Settings, a rough-prompt editor,
+Enhance, an editable result, explicit Paste and Copy actions, and session controls.
+Starting the application a second time just brings back the existing floating
+button; there is never more than one button or notification icon.
 
-A native Windows application for rewriting rough English prompts. Tickets 01-05
-provide a draggable floating launcher, Settings, a rough-prompt editor, Enhance,
-an editable result, explicit Paste and Copy actions, and session controls.
+Building and running from source needs the stable WinUI toolchain described in
+[WinUI build, checks, and publish](docs/winui-development.md). A
+self-contained folder (`scripts\publish-winui.ps1`) runs without the .NET SDK.
 
-Requires Windows 10/11 with .NET Framework 4.8 or later and Windows PowerShell 5.1.
-No package restore, Node/Python runtime, SDK, website, or installer is needed.
-
-From the project directory:
+From the project directory (builds, then launches the WinUI application):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 ```
+
+There is one application: WinUI 3. Its source is in `src/`, and its test host is
+in `tests/`. The earlier Windows Forms fallback has been removed.
 
 The app starts as a small **Prompt Enhancer** button above ordinary application
 windows. Click it to open the editor. Drag the button to move it; drag the
@@ -75,12 +77,12 @@ Run all checks, or one confirmed test boundary:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only DesktopWorkflow
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Workflow
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only OpenRouter
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only CloudRecovery
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Recovery
 ```
 
-Checks use the real Windows Forms controls and real DPAPI storage, with controlled
+Checks use the real WinUI controls and real DPAPI storage, with controlled
 HTTP responses and a non-sensitive test credential. A fresh child process verifies
 credential reuse after relaunch. A replacement integration exercises the unchanged
 desktop with the baseline enhancement policy. HTTP checks cover the exact submitted
@@ -89,7 +91,7 @@ evaluate live model quality. Desktop checks also exercise both the Paste button
 and actual Ctrl+V through Enhance, editing, and Copy, checking that the clipboard
 changes only on Copy and contains the edited result. These checks temporarily
 use the Windows clipboard and restore its original contents afterward.
-Widget checks start the real floating application context and an isolated editor
+Widget checks start the real floating experience and an isolated editor
 in a separate process. Native Windows mouse input verifies launcher dragging,
 click-to-expand, title-bar movement, and text selection. The companion editor
 accepts typing while window hit-testing verifies the widget stays above it;
@@ -100,20 +102,19 @@ and native mouse input opens its restore menu. Clear is followed by a fresh
 enhancement using the saved key. Two separate application processes exercise Quit
 and relaunch: prompts start empty and the protected key still authenticates.
 Pending work is checked through Hide/Restore and Quit as well. Test-only UI
-Automation references come from the installed .NET Framework; no extra download
-is required.
+Automation references come from the installed .NET Framework.
 Recovery checks exercise missing, malformed, and rejected credentials through
 Settings, connectivity loss, an actual HttpClient timeout, provider errors,
 empty/malformed/truncated responses, and secret echoes. Every failure is followed
 by a successful retry with a revised rough prompt, checking input retention,
-safe feedback, and Copy availability. `CloudRecovery` selects these checks alone;
-they are also included in `DesktopWorkflow` and the full suite.
+safe feedback, and Copy availability. `Recovery` selects these checks alone;
+they are also included in the full suite.
 The companion process is closed and the mouse position restored after checks.
 Run desktop checks on an unlocked interactive Windows desktop and leave mouse
 and keyboard idle while they run.
 Test credentials use unique directories under
 `build\test-data` and are deleted after each check; the production credential path
-is never used. No external packages or test framework downloads are needed.
+is never used. The WinUI projects restore their pinned dependencies during build.
 
 The selected configuration is `openai/gpt-4.1`, temperature 0.2, 2048 maximum
 output tokens, and a 60-second timeout using non-streaming OpenRouter chat
@@ -122,7 +123,7 @@ preserves stated constraints and unresolved references, and adds only essential
 task details. Simple requests stay short; structure follows complexity, without
 mandatory headings or added length limits. Instructions live in the provider-neutral
 `EnhancementPolicy`; model and HTTP configuration remain in `OpenRouterProvider`
-and `Program`. The token ceiling is a transport limit, not a requested output length.
+and `App.xaml.cs`. The token ceiling is a transport limit, not a requested output length.
 
 Ticket 06 evaluated ten non-sensitive examples through the actual editor and
 Enhance action with a configured account. GPT-4.1 preserved intent in all ten
@@ -135,7 +136,7 @@ and [model decision](docs/adr/0002-intent-preserving-enhancement-model.md).
 The desktop receives an `IEnhancementProvider` and an `ICredentialStore` through
 its constructor. Provider authentication, HTTP requests, JSON responses, and
 failure mapping are isolated in `OpenRouterProvider`. Replace that integration
-in `Program` to use the same desktop workflow and enhancement policy with another
+in `App.xaml.cs` to use the same desktop workflow and enhancement policy with another
 provider. See [the framework and security decision](docs/adr/0001-windows-desktop-and-provider-boundary.md).
 
 A live check uses your own account configured in Settings. Submit a non-sensitive

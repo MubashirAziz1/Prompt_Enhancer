@@ -10,6 +10,7 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
@@ -20,8 +21,5 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9457" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
-    <Compile Include="../src/Enhancement.cs" Link="Core/Enhancement.cs" />
-    <Compile Include="../src/OpenRouterProvider.cs" Link="Core/OpenRouterProvider.cs" />
-    <Compile Include="../src/DpapiCredentialStore.cs" Link="Core/DpapiCredentialStore.cs" />
   </ItemGroup>
 </Project>

@@ -56,6 +56,11 @@ public partial class App
             var dialog = Elements().OfType<ContentDialog>().Single();
             Require(dialog.ActualTheme == theme && Find<PasswordBox>("ApiKey").ActualTheme == theme,
                 "Settings must use the same current theme as the editor.");
+            Find<PasswordBox>("ApiKey").Focus(FocusState.Keyboard);
+            NativeDesktop.TypeText(editor, "discarded-keyboard-fixture");
+            await Until(() => Find<PasswordBox>("ApiKey").Password == "discarded-keyboard-fixture");
+            NativeDesktop.Press(editor, 0x09);
+            await Until(() => FocusManager.GetFocusedElement(root.XamlRoot) is Button focused && (string)focused.Content == "Save");
             await Snapshot(dialog, "settings-" + theme + ".png");
             InvokeDialog("Cancel");
             await SettingsClosed();
@@ -89,7 +94,7 @@ public partial class App
             editor.AppWindow.Resize(originalSize);
             root.RequestedTheme = ElementTheme.Default;
         }
-        checks.Add("PASS Light/dark editor and Settings rendering, native title bar, and Windows accent integration");
+        checks.Add("PASS Light/dark editor and Settings rendering, Settings keyboard input/Tab, native title bar, and Windows accent integration");
     }
 
     private static async Task Snapshot(FrameworkElement element, string name)

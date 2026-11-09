@@ -1,0 +1,19 @@
+<Project>
+  <!-- Unpackaged XAML emits a PRI and compiled markup that the SDK's publish
+       item list omits. Carry both alongside each executable. -->
+  <Target Name="PublishWinUIResources" AfterTargets="ComputeFilesToPublish" Condition="'$(UseWinUI)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="$(TargetDir)$(AssemblyName).pri" />
+      <ResolvedFileToPublish Include="$(TargetDir)$(AssemblyName).pri">
+        <RelativePath>$(AssemblyName).pri</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+      <_WinUIMarkup Include="$(TargetDir)**/*.xbf" />
+      <ResolvedFileToPublish Remove="@(_WinUIMarkup)" />
+      <ResolvedFileToPublish Include="@(_WinUIMarkup)">
+        <RelativePath>%(_WinUIMarkup.RecursiveDir)%(_WinUIMarkup.Filename)%(_WinUIMarkup.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>
