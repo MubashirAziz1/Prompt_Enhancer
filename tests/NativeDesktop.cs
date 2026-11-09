@@ -43,8 +43,9 @@ internal static class NativeDesktop
             await Task.Run(() =>
             {
                 Move(start);
-                Thread.Sleep(50);
+                Thread.Sleep(100);
                 Send([new Input { Mouse = new MouseInput { Flags = right ? 8u : 2u } }]);
+                Thread.Sleep(100); // Let the target establish capture before moving.
                 try
                 {
                     for (int step = 1; step <= 10; step++)
@@ -62,6 +63,25 @@ internal static class NativeDesktop
 
     public static PointInt32 Center(Window window) => new(window.AppWindow.Position.X + window.AppWindow.Size.Width / 2,
         window.AppWindow.Position.Y + window.AppWindow.Size.Height / 2);
+
+    public static async Task Hold(Window window, Func<Task> whilePressed)
+    {
+        Activate(window);
+        await Task.Delay(200);
+        var point = Center(window);
+        if (GetAncestor(WindowFromPoint(point), 2) != WinRT.Interop.WindowNative.GetWindowHandle(window))
+            throw new Exception("Mouse input must target the intended acceptance window.");
+        GetCursorPos(out var previous);
+        try
+        {
+            Move(point);
+            await Task.Delay(100);
+            Send([new Input { Mouse = new MouseInput { Flags = 2 } }]);
+            try { await Task.Delay(450); await whilePressed(); }
+            finally { Send([new Input { Mouse = new MouseInput { Flags = 4 } }]); }
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
     public static PointInt32 ClientPoint(Window window, int x, int y)
     {
         var point = new PointInt32(x, y);

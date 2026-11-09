@@ -41,6 +41,14 @@ public partial class App : Application
             Directory.CreateDirectory(directory);
             bool reuse = arguments.Length == 3 && arguments[1] == "--credential-reuse";
             string only = arguments.Length == 3 && arguments[1] == "--only" ? arguments[2] : "All";
+            if (only == "Blob")
+            {
+                await BlobWorkflow();
+                File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
+                Directory.Delete(directory, true);
+                Environment.Exit(0);
+                return;
+            }
             if (only == "Hide")
             {
                 var hideCredentials = new DpapiCredentialStore(Path.Combine(directory, "key.dpapi"));
@@ -121,6 +129,7 @@ public partial class App : Application
                 {
                     await ReplacementWorkflow(credentials);
                     await AppearanceWorkflow();
+                    await BlobWorkflow();
                 }
                 if (only == "All" || only == "Session")
                 {

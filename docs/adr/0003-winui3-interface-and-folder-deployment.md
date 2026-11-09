@@ -1,5 +1,12 @@
 # Migrate the interface to WinUI 3 with self-contained folder deployment
 
+Floating button appearance update, 2026-11-10: the user's liquid sphere reference
+supersedes the launcher's rectangular accent button. The floating button now uses
+a procedural glossy blue surface in a shaped 96 by 96 logical-pixel native window,
+with pointer lighting, press deformation, and a keyboard focus ring. The native
+Button automation and click/drag/menu behavior remain. See the
+[liquid button design](../../.scratch/liquid-blob/spec.md).
+
 Appearance update, 2026-11-09: the user's image reference and request for similar
 dimensions supersede this decision's input-first layout, Windows theme palette,
 and standard title bar. The current editor is a dark 420 by 530 logical-pixel

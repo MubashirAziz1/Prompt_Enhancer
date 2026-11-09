@@ -19,8 +19,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 There is one application: WinUI 3. Its source is in `src/`, and its test host is
 in `tests/`. The earlier Windows Forms fallback has been removed.
 
-The app starts as a small **Prompt Enhancer** button above ordinary application
-windows. Click it to open the editor. Drag the button to move it; drag the
+The app starts as a small glossy blue liquid sphere above ordinary application
+windows. Its surface and reflections follow the pointer and compress on press.
+The sphere occupies a 96 by 96 logical-pixel window with clear desktop corners;
+animations stop at rest and follow the Windows animation setting. Keyboard focus
+has a visible ring, and Windows contrast themes use system colors.
+Click it to open the editor. Drag the button to move it; drag the
 editor's central toolbar title to move the expanded window. Both stay above your other
 editors while you work. Closing or minimizing the editor returns to the button.
 Both current prompts, including result edits, survive closing or minimizing.
@@ -87,6 +91,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Workflow
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only OpenRouter
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Recovery
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Blob
 ```
 
 Checks use the real WinUI controls and real DPAPI storage, with controlled

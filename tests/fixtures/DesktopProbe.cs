@@ -41,7 +41,7 @@ internal static class DesktopProbe
                     var button = window.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "OpenEditor"));
                     if (button == null) throw new Exception("Published startup must show only the floating button.");
                     double scale = GetDpiForWindow(new IntPtr(window.Current.NativeWindowHandle)) / 96.0;
-                    if (size.Width > 100 * scale || size.Height > 80 * scale) throw new Exception("Published launcher must remain compact at the actual DPI.");
+                    if (size.Width > 100 * scale || size.Height > 100 * scale) throw new Exception("Published launcher must remain compact at the actual DPI.");
                     launcher = window;
                 }
                 if (launcher == null) throw new Exception("Published floating button unavailable.");

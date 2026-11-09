@@ -42,7 +42,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run.ps1
 # Build and run real WinUI workflow checks.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1
-# Select one boundary (Settings, Workflow, Recovery, Appearance, Session, OpenRouter).
+# Select one boundary (Settings, Workflow, Recovery, Appearance, Blob, Session, OpenRouter).
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Recovery
 # Publish the distributable self-contained folder.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-winui.ps1

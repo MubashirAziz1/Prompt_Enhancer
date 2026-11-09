@@ -31,7 +31,7 @@ public partial class App
             launcherRoot.RequestedTheme = theme;
             await Until(() => launcherRoot.ActualTheme == theme);
             await Task.Delay(100);
-            Require(launcherRoot.ActualWidth is >= 80 and <= 90 && launcherRoot.ActualHeight is >= 60 and <= 70,
+            Require(launcherRoot.ActualWidth is >= 91 and <= 97 && launcherRoot.ActualHeight is >= 91 and <= 97,
                 "The floating button must retain usable logical dimensions at the actual display scale.");
             await Snapshot(launcherRoot, "floating-" + theme + ".png");
         }
