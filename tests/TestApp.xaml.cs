@@ -41,6 +41,16 @@ public partial class App : Application
             Directory.CreateDirectory(directory);
             bool reuse = arguments.Length == 3 && arguments[1] == "--credential-reuse";
             string only = arguments.Length == 3 && arguments[1] == "--only" ? arguments[2] : "All";
+            if (only == "Hide")
+            {
+                var hideCredentials = new DpapiCredentialStore(Path.Combine(directory, "key.dpapi"));
+                hideCredentials.Save("non-sensitive-fixture-key");
+                await EditorHideWorkflow(hideCredentials);
+                File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
+                Directory.Delete(directory, true);
+                Environment.Exit(0);
+                return;
+            }
             if (!reuse && (only == "All" || only == "OpenRouter"))
             {
                 var providerChecks = new List<KeyValuePair<string, Action>>();
@@ -114,6 +124,7 @@ public partial class App : Application
                 }
                 if (only == "All" || only == "Session")
                 {
+                    await EditorHideWorkflow(credentials);
                     await FloatingSession(credentials);
                     await FreshFloatingProcesses(path);
                 }
@@ -152,7 +163,7 @@ public partial class App : Application
     }
 
     private void InvokeDialog(string label) =>
-        ((IInvokeProvider)new ButtonAutomationPeer(Elements().OfType<Button>().Single(b => (string)b.Content == label))
+        ((IInvokeProvider)new ButtonAutomationPeer(Elements().OfType<Button>().Single(b => b.Content is string text && text == label))
             .GetPattern(PatternInterface.Invoke)).Invoke();
 
     private Task SettingsClosed() => Until(() => !Elements().OfType<PasswordBox>().Any() && Find<Button>("Settings").IsEnabled);

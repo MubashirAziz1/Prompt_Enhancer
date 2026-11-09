@@ -1,5 +1,14 @@
 # Migrate the interface to WinUI 3 with self-contained folder deployment
 
+Appearance update, 2026-11-09: the user's image reference and request for similar
+dimensions supersede this decision's input-first layout, Windows theme palette,
+and standard title bar. The current editor is a dark 420 by 530 logical-pixel
+floating panel with the editable result above a bottom rough-prompt composer,
+circular toolbar controls, a session menu, and native caption-region dragging.
+The provider boundary, credential storage, session behavior, and WinUI-only
+folder delivery remain applicable. See the
+[compact editor notes](../../.scratch/compact-editor/map.md).
+
 Status: accepted. Tickets 01 and 02 implemented and verified. On 2026-11-09 the
 user requested WinUI only, superseding the fallback requirement below.
 

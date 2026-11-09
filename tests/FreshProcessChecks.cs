@@ -51,7 +51,7 @@ public partial class App
             Invoke("Enhance");
             await Until(() => !Find<Button>("Enhance").IsEnabled);
             pending = true;
-            Invoke("Quit");
+            await InvokeSession("Quit");
         }
         else if (mode == "launcher-close")
         {
@@ -61,7 +61,9 @@ public partial class App
         }
         else
         {
-            Invoke("Hide");
+            await InvokeSession("Hide");
+            await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
+            await TrayCommand("hide", launcher.Title);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
             await TrayCommand("quit", launcher.Title);
         }

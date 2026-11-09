@@ -1,4 +1,4 @@
-param([ValidateSet('All', 'Settings', 'Workflow', 'Recovery', 'Appearance', 'Session', 'OpenRouter')][string]$Only = 'All', [switch]$Published)
+param([ValidateSet('All', 'Settings', 'Workflow', 'Recovery', 'Appearance', 'Session', 'Hide', 'OpenRouter')][string]$Only = 'All', [switch]$Published)
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'build.ps1') -Tests -Publish:$Published
 $projectRoot = Split-Path -Parent $PSScriptRoot

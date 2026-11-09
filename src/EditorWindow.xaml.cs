@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 
@@ -24,7 +25,15 @@ public sealed partial class EditorWindow : Window
         this.provider = provider;
         this.credentials = credentials;
         InitializeComponent();
-        ((OverlappedPresenter)AppWindow.Presenter).IsAlwaysOnTop = true;
+        var presenter = (OverlappedPresenter)AppWindow.Presenter;
+        presenter.IsAlwaysOnTop = true;
+        presenter.IsMaximizable = false;
+        presenter.SetBorderAndTitleBar(true, false);
+        DragRegion.SizeChanged += (_, _) => UpdateDragRegion();
+        AppWindow.Changed += (_, args) =>
+        {
+            if (args.DidSizeChange) UpdateDragRegion();
+        };
         Root.ActualThemeChanged += (_, _) => UpdateWindowTheme();
         UpdateWindowTheme();
         // Size before the first show; correct it on load only if the real scale differs.
@@ -40,6 +49,7 @@ public sealed partial class EditorWindow : Window
                 if (!string.IsNullOrWhiteSpace(credentials.Load())) Status.Text = "Ready. Saved API key available.";
             }
             catch { Status.Text = "The saved API key could not be read. Open Settings to replace it."; }
+            UpdateDragRegion();
             RoughPrompt.Focus(FocusState.Programmatic);
         };
         Closed += (_, _) =>
@@ -55,12 +65,24 @@ public sealed partial class EditorWindow : Window
     {
         sizedScale = scale;
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest).WorkArea;
-        AppWindow.Resize(new SizeInt32(Math.Min((int)(780 * scale), area.Width), Math.Min((int)(850 * scale), area.Height)));
+        AppWindow.Resize(new SizeInt32(Math.Min((int)(420 * scale), area.Width), Math.Min((int)(530 * scale), area.Height)));
         AppWindow.Move(new PointInt32(
             Math.Clamp(AppWindow.Position.X, area.X, area.X + Math.Max(0, area.Width - AppWindow.Size.Width)),
             Math.Clamp(AppWindow.Position.Y, area.Y, area.Y + Math.Max(0, area.Height - AppWindow.Size.Height))));
     }
 
+    private void UpdateDragRegion()
+    {
+        if (closed || Root.XamlRoot == null || DragRegion.ActualWidth <= 0) return;
+        double scale = Root.XamlRoot.RasterizationScale;
+        var point = DragRegion.TransformToVisual(Root).TransformPoint(new Windows.Foundation.Point());
+        InputNonClientPointerSource.GetForWindowId(AppWindow.Id).SetRegionRects(NonClientRegionKind.Caption,
+            [new RectInt32((int)(point.X * scale), (int)(point.Y * scale),
+                (int)(DragRegion.ActualWidth * scale), (int)(DragRegion.ActualHeight * scale))]);
+    }
+
+    private void OpenSessionMenu(object sender, RoutedEventArgs args) => SessionFlyout.ShowAt((FrameworkElement)sender);
+    private void Collapse(object sender, RoutedEventArgs args) => Close();
     private void ResultChanging(TextBox sender, TextBoxTextChangingEventArgs args) => UpdateActions();
 
     private void Clear(object sender, RoutedEventArgs args)
@@ -73,8 +95,8 @@ public sealed partial class EditorWindow : Window
         UpdateActions();
     }
 
-    private void Hide(object sender, RoutedEventArgs args) => HideRequested?.Invoke();
-    private void Quit(object sender, RoutedEventArgs args) => QuitRequested?.Invoke();
+    private void Hide(object sender, RoutedEventArgs args) { SessionFlyout.Hide(); HideRequested?.Invoke(); }
+    private void Quit(object sender, RoutedEventArgs args) { SessionFlyout.Hide(); QuitRequested?.Invoke(); }
 
     private void UpdateWindowTheme()
     {
@@ -167,6 +189,7 @@ public sealed partial class EditorWindow : Window
                 if (text.Length > 0 && char.IsHighSurrogate(text[^1])) text = text.Substring(0, text.Length - 1);
             }
             RoughPrompt.SelectedText = text;
+            UpdateDragRegion();
             RoughPrompt.Focus(FocusState.Programmatic);
             Status.Text = truncated
                 ? $"Pasted the first part only. The rough prompt is limited to {RoughPrompt.MaxLength:N0} characters."

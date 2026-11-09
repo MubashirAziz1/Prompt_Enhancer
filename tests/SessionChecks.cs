@@ -20,7 +20,7 @@ public partial class App
         editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
         string trayName = "Prompt Enhancer acceptance " + Environment.ProcessId;
         var launcher = new LauncherWindow { Title = trayName };
-        previousEditor.Close();
+        previousEditor?.Close();
         using var experience = new FloatingExperience(editor, launcher, () => { });
         experience.Start();
         await Until(() => launcher.AppWindow.IsVisible && ((FrameworkElement)launcher.Content).ActualHeight > 0);
@@ -61,8 +61,8 @@ public partial class App
             await SelectTextWithMouse(result, scale);
             Require(result.SelectedText.Length > 0 && editor.AppWindow.Position.Equals(origin), "Mouse text selection must not move the editor.");
             checks.Add("PASS Native launcher drag/click, title-bar movement, normal text selection, and actual stacking over an active companion editor");
-            // A native close request exercises interception, rather than calling a private handler.
-            NativeDesktop.Close(editor);
+            // The visible close control must collapse and retain the current session.
+            Invoke("Collapse");
             await Until(() => launcher.AppWindow.IsVisible && !editor.AppWindow.IsVisible);
             NativeDesktop.Press(launcher, 0x20);
             await Until(() => editor.AppWindow.IsVisible);
@@ -88,15 +88,23 @@ public partial class App
             experience.OpenEditor();
             await Until(() => editor.AppWindow.IsVisible);
             checks.Add("PASS Native launcher context menu Hide removes both windows and retains the session");
-            Invoke("Hide");
+            await InvokeSession("Hide");
+            await Task.Delay(100);
+            Require(!editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible,
+                "Editor Hide must return to the floating button without quitting or hiding the launcher.");
+            Require(Find<TextBox>("RoughPrompt").Text == "Retain this rough prompt." && result.Text == "Retain my result edits.",
+                "Editor Hide must retain the rough prompt and reviewed result.");
+            await TrayCommand("hide", trayName);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
             await TrayCommand("restore", trayName);
             await Until(() => launcher.AppWindow.IsVisible && !editor.AppWindow.IsVisible);
             await NativeDesktop.Stroke(launcher, NativeDesktop.Center(launcher), new PointInt32());
             await Until(() => editor.AppWindow.IsVisible);
             Require(result.Text == "Retain my result edits.", "The real tray menu must restore the retained session.");
-            Invoke("Hide");
-            await Task.Delay(100);
+            await InvokeSession("Hide");
+            await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
+            await TrayCommand("hide", trayName);
+            await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
             await TrayCommand("double", trayName);
             await Until(() => launcher.AppWindow.IsVisible && !editor.AppWindow.IsVisible);
             experience.OpenEditor();
@@ -110,9 +118,12 @@ public partial class App
             Find<TextBox>("RoughPrompt").Text = transport.ExpectedPrompt;
             Invoke("Enhance");
             await Until(() => !Find<Button>("Enhance").IsEnabled);
+            await OpenSessionMenu();
             Require(!Find<Button>("Clear").IsEnabled && Find<Button>("Hide").IsEnabled && Find<Button>("Quit").IsEnabled,
                 "Hide and Quit must remain available during enhancement; Clear must wait until idle.");
-            Invoke("Hide");
+            await InvokeSession("Hide");
+            await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
+            await TrayCommand("hide", trayName);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
             pending.SetResult(ControlledHttp.Completion("Available when restored."));
             await Until(() => Find<Button>("Enhance").IsEnabled);
@@ -122,7 +133,7 @@ public partial class App
             experience.OpenEditor();
             await Until(() => editor.AppWindow.IsVisible);
             Require(result.Text == "Available when restored.", "Restoration must expose a completion received while hidden.");
-            checks.Add("PASS Hide remains available during enhancement; hidden completion stays hidden and is retained");
+            checks.Add("PASS Hide remains available during enhancement; tray-hidden completion stays hidden and is retained");
 
             bool canceled = false;
             pending = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -134,7 +145,7 @@ public partial class App
             bool editorDestroyed = false, launcherDestroyed = false;
             editorWindow.Destroying += (_, _) => editorDestroyed = true;
             launcherWindow.Destroying += (_, _) => launcherDestroyed = true;
-            Invoke("Quit");
+            await InvokeSession("Quit");
             await Until(() => editorDestroyed && launcherDestroyed && canceled);
             pending.SetResult(ControlledHttp.Completion("Late completion must be discarded."));
             await Task.Delay(200);
@@ -154,6 +165,18 @@ public partial class App
         }
     }
 
+    private async Task OpenSessionMenu()
+    {
+        if (Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Hide")) return;
+        Invoke("SessionMenu");
+        await Until(() => Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Hide"));
+    }
+
+    private async Task InvokeSession(string command)
+    {
+        await OpenSessionMenu();
+        Invoke(command);
+    }
     private static string DesktopProbePath() => FixtureExecutable("DesktopProbe.exe");
 
     private static string FixtureExecutable(string name)
@@ -180,7 +203,7 @@ public partial class App
         NativeDesktop.Activate(editor);
         box.Focus(FocusState.Pointer);
         await Task.Delay(100);
-        var point = box.TransformToVisual((FrameworkElement)editor.Content).TransformPoint(new Windows.Foundation.Point(18, 45));
+        var point = box.TransformToVisual((FrameworkElement)editor.Content).TransformPoint(new Windows.Foundation.Point(18, 18));
         var start = NativeDesktop.ClientPoint(editor, (int)(point.X * scale), (int)(point.Y * scale));
         await NativeDesktop.Stroke(editor, start, new PointInt32((int)(130 * scale), 0));
     }

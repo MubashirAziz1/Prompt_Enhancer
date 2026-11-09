@@ -21,20 +21,27 @@ in `tests/`. The earlier Windows Forms fallback has been removed.
 
 The app starts as a small **Prompt Enhancer** button above ordinary application
 windows. Click it to open the editor. Drag the button to move it; drag the
-editor's title bar to move the expanded window. Both stay above your other
+editor's central toolbar title to move the expanded window. Both stay above your other
 editors while you work. Closing or minimizing the editor returns to the button.
 Both current prompts, including result edits, survive closing or minimizing.
-Select **Hide** in the editor, or right-click the floating button and choose
-**Hide**, to remove both floating windows. To restore, right-click the
+The dark floating editor opens at **420 × 530 logical pixels**, matching the
+compact reference proportions. Windows scales it for your display DPI. Review
+and edit the enhanced prompt above the bottom rough-prompt composer; use the
+toolbar **+** to clear both prompts. Resize the window for more room; smaller
+windows scroll to keep the controls available.
+Select **Hide** in the editor's **…** menu to return to the small floating button,
+keeping both current prompts. Right-click the floating button and choose
+**Hide** to remove both floating windows. To restore, right-click the
 **Prompt Enhancer** notification icon in the Windows system tray and choose
 **Show widget**, or double-click that icon. Look under **Show hidden icons**
 if Windows places it in the tray overflow. Click the restored button to reopen
 the same prompts.
 
-Use **Clear** when enhancement is idle to empty both prompts and begin a fresh
-task. Select **Quit** in the editor or the button/tray menu to exit and discard
+Use **+ (Clear prompts)** when enhancement is idle to empty both prompts and begin a fresh
+task. Select **Quit** in the editor's **…** menu or the button/tray menu to exit and discard
 session contents. Alt+F4 on the floating button also exits. Hide and Quit remain
-available during enhancement; completed work stays hidden until you restore it,
+available during enhancement; editor Hide leaves the floating button visible,
+and completed work stays in the editor until you reopen it,
 and Quit cancels pending work. Relaunch starts with empty prompts. Clear and Quit
 keep your protected API key available for the next enhancement/session.
 
