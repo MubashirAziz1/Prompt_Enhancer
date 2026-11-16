@@ -2,8 +2,6 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Input;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
 
@@ -14,48 +12,9 @@ public sealed class FloatingButton : Button
     private PointInt32 press, origin;
     private bool pressed, rightPressed, dragged;
     public AppWindow DragWindow { get; set; }
-    public LiquidBlobSurface Surface { get; set; }
     public event Action Activated;
 
-    public FloatingButton()
-    {
-        ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand);
-        Click += (_, _) => Activated?.Invoke(); // Keyboard and automation.
-        GotFocus += (_, _) => UpdateSurface();
-        LostFocus += (_, _) => { keyboardDown = false; UpdateSurface(); };
-    }
-
-    private bool over, keyboardDown;
-    private double pointerX, pointerY;
-    private void UpdateSurface() => Surface?.Interact(pointerX, pointerY, over, pressed || keyboardDown, FocusState == FocusState.Keyboard);
-
-    protected override void OnPointerEntered(PointerRoutedEventArgs args)
-    {
-        over = true;
-        UpdateSurface();
-        base.OnPointerEntered(args);
-    }
-
-    protected override void OnPointerExited(PointerRoutedEventArgs args)
-    {
-        over = false;
-        UpdateSurface();
-        base.OnPointerExited(args);
-    }
-
-    protected override void OnKeyDown(KeyRoutedEventArgs args)
-    {
-        if (args.Key is Windows.System.VirtualKey.Space or Windows.System.VirtualKey.Enter) keyboardDown = true;
-        UpdateSurface();
-        base.OnKeyDown(args);
-    }
-
-    protected override void OnKeyUp(KeyRoutedEventArgs args)
-    {
-        keyboardDown = false;
-        UpdateSurface();
-        base.OnKeyUp(args);
-    }
+    public FloatingButton() => Click += (_, _) => Activated?.Invoke(); // Keyboard and automation.
 
     protected override void OnPointerPressed(PointerRoutedEventArgs args)
     {
@@ -71,17 +30,11 @@ public sealed class FloatingButton : Button
         origin = DragWindow.Position;
         dragged = false;
         pressed = CapturePointer(args.Pointer);
-        Focus(FocusState.Pointer);
-        UpdateSurface();
         args.Handled = true;
     }
 
     protected override void OnPointerMoved(PointerRoutedEventArgs args)
     {
-        var position = args.GetCurrentPoint(this).Position;
-        pointerX = position.X / Math.Max(1, ActualWidth) * 2 - 1;
-        pointerY = position.Y / Math.Max(1, ActualHeight) * 2 - 1;
-        UpdateSurface();
         if (!pressed) { base.OnPointerMoved(args); return; }
         GetCursorPos(out var pointer);
         int dx = pointer.X - press.X, dy = pointer.Y - press.Y;
@@ -109,11 +62,9 @@ public sealed class FloatingButton : Button
             return;
         }
         if (!pressed) { base.OnPointerReleased(args); return; }
-        var point = args.GetCurrentPoint(this).Position;
-        bool activate = !dragged && point.X >= 0 && point.X <= ActualWidth && point.Y >= 0 && point.Y <= ActualHeight;
+        bool activate = !dragged;
         pressed = false;
         rightPressed = false;
-        UpdateSurface();
         ReleasePointerCapture(args.Pointer);
         args.Handled = true;
         if (activate) Activated?.Invoke();
@@ -123,8 +74,6 @@ public sealed class FloatingButton : Button
     {
         pressed = false;
         rightPressed = false;
-        keyboardDown = false;
-        UpdateSurface();
         base.OnPointerCaptureLost(args);
     }
 
