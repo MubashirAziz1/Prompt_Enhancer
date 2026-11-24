@@ -52,7 +52,7 @@ public partial class App : Application
                 Timeout = TimeSpan.FromSeconds(60),
                 MaxResponseContentBufferSize = 1024 * 1024
             };
-            var editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+            var editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
             experience = new FloatingExperience(editor, new LauncherWindow(), Shutdown);
             experience.Start();
             var queue = DispatcherQueue.GetForCurrentThread();

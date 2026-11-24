@@ -18,7 +18,7 @@ public partial class App
         var credentials = new DpapiCredentialStore(path);
         var transport = new ControlledHttp { ExpectedKey = credentials.Load() };
         using var client = new HttpClient(transport);
-        editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+        editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
         var launcher = new LauncherWindow { Title = "Prompt Enhancer fresh " + Environment.ProcessId };
         bool canceled = false, pending = false;
         var experience = new FloatingExperience(editor, launcher, () =>

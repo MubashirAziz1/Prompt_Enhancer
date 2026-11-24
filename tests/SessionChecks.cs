@@ -17,7 +17,7 @@ public partial class App
         var previousEditor = editor;
         var transport = new ControlledHttp { ExpectedKey = credentials.Load() };
         using var client = new HttpClient(transport);
-        editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+        editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
         string trayName = "Prompt Enhancer acceptance " + Environment.ProcessId;
         var launcher = new LauncherWindow { Title = trayName };
         previousEditor?.Close();

@@ -13,17 +13,14 @@ namespace PromptEnhancer
 {
     public sealed class OpenRouterProvider : IEnhancementProvider
     {
-        public const string InitialModel = "openai/gpt-4.1";
         private static readonly Uri Endpoint = new Uri("https://openrouter.ai/api/v1/chat/completions");
         private readonly HttpClient client;
         private readonly ICredentialStore credentials;
-        private readonly string model;
 
-        public OpenRouterProvider(HttpClient client, ICredentialStore credentials, string model)
+        public OpenRouterProvider(HttpClient client, ICredentialStore credentials)
         {
             this.client = client;
             this.credentials = credentials;
-            this.model = model;
         }
 
         public async Task<string> EnhanceAsync(string roughPrompt, string policy, CancellationToken cancellation)
@@ -36,7 +33,15 @@ namespace PromptEnhancer
             try
             {
                 var payload = new ChatRequest {
-                    Model = model, Temperature = 0.2, MaxTokens = 2048, Stream = false,
+                    Models = new[] {
+                        "google/gemma-4-31b-it:free",
+                        "inclusionai/ling-3.2-flash:free",
+                        "baidu/ernie-5.5-flash-preview:free",
+                        "nvidia/nemotron-3.5-lightning:free",
+                        "google/gemma-4-26b-a4b-it:free",
+                        "openrouter/free"
+                    },
+                    Temperature = 0.2, MaxTokens = 2048, Stream = false,
                     Messages = new[] { new ChatMessage { Role = "system", Content = policy },
                         new ChatMessage { Role = "user", Content = roughPrompt } }
                 };
@@ -96,7 +101,7 @@ namespace PromptEnhancer
         [DataContract]
         private sealed class ChatRequest
         {
-            [DataMember(Name = "model")] public string Model;
+            [DataMember(Name = "models")] public string[] Models;
             [DataMember(Name = "messages")] public ChatMessage[] Messages;
             [DataMember(Name = "temperature")] public double Temperature;
             [DataMember(Name = "max_tokens")] public int MaxTokens;

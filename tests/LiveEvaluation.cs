@@ -7,7 +7,7 @@ namespace PromptEnhancer.WinUI.Tests;
 
 public partial class App
 {
-    // Manual, paid evaluation only. Never included in the controlled checks.
+    // Manual, live free-model evaluation only. Never included in the controlled checks.
     private async Task<int> LiveEvaluation()
     {
         var credentials = new DpapiCredentialStore(Path.Combine(
@@ -30,10 +30,10 @@ public partial class App
         {
             using var transport = new UsageTransport();
             using var client = new HttpClient(transport) { Timeout = TimeSpan.FromSeconds(60), MaxResponseContentBufferSize = 1024 * 1024 };
-            editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+            editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
             editor.Activate();
             await Task.Delay(400);
-            Console.WriteLine("Live OpenRouter evaluation: " + OpenRouterProvider.InitialModel);
+            Console.WriteLine("Live OpenRouter evaluation: prioritized free models with openrouter/free fallback.");
             Console.WriteLine("Non-sensitive fixed examples; results vary. No clipboard actions or credential writes.");
             foreach (var example in examples)
             {

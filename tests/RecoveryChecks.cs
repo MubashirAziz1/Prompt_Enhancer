@@ -61,7 +61,7 @@ public partial class App
                 Timeout = scenario.Name == "Timeout" ? TimeSpan.FromMilliseconds(120) : TimeSpan.FromSeconds(60),
                 MaxResponseContentBufferSize = 1024 * 1024
             };
-            await OpenEditor(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+            await OpenEditor(new OpenRouterProvider(client, credentials), credentials);
             var rough = Find<TextBox>("RoughPrompt");
             var result = Find<TextBox>("EnhancedPrompt");
             rough.Text = transport.ExpectedPrompt;

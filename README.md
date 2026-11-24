@@ -61,8 +61,9 @@ and save a corrected key. For a timeout, connectivity problem, or provider error
 recover the connection/account or wait before retrying. You can edit the rough
 prompt first: **Retry** sends its current text using the current saved key.
 
-Only Enhance sends text to the cloud. Usage charges may apply to your OpenRouter
-account. Clipboard access happens only through explicit paste/copy actions;
+Only Enhance sends text to the cloud. Enhancement requests use free OpenRouter
+models; account and free-tier limits still apply. Clipboard access happens only
+through explicit paste/copy actions;
 opening the app, typing, enhancing, and editing do not change the clipboard.
 There is no clipboard monitoring or automatic copy. Input and results exist only
 in memory and are discarded on exit.
@@ -93,8 +94,9 @@ Checks use the real WinUI controls and real DPAPI storage, with controlled
 HTTP responses and a non-sensitive test credential. A fresh child process verifies
 credential reuse after relaunch. A replacement integration exercises the unchanged
 desktop with the baseline enhancement policy. HTTP checks cover the exact submitted
-text, authentication, invalid/truncated responses, and safe errors. They do not
-evaluate live model quality. Desktop checks also exercise both the Paste button
+text, authentication, the ordered free-model routing request, invalid/truncated
+responses, and safe errors. They do not evaluate live model availability, server-side
+failover, or semantic quality. Desktop checks also exercise both the Paste button
 and actual Ctrl+V through Enhance, editing, and Copy, checking that the clipboard
 changes only on Copy and contains the edited result. These checks temporarily
 use the Windows clipboard and restore its original contents afterward.
@@ -123,21 +125,41 @@ Test credentials use unique directories under
 `build\test-data` and are deleted after each check; the production credential path
 is never used. The WinUI projects restore their pinned dependencies during build.
 
-The selected configuration is `openai/gpt-4.1`, temperature 0.2, 2048 maximum
-output tokens, and a 60-second timeout using non-streaming OpenRouter chat
-completions. Enhancement rewrites the request rather than carrying it out,
+The backend submits these models in priority order using OpenRouter's `models`
+parameter, with no model selector in the editor:
+
+1. `google/gemma-4-31b-it:free`
+2. `inclusionai/ling-3.2-flash:free`
+3. `baidu/ernie-5.5-flash-preview:free`
+4. `nvidia/nemotron-3.5-lightning:free`
+5. `google/gemma-4-26b-a4b-it:free`
+6. `openrouter/free` (automatic free-model fallback)
+
+OpenRouter handles ordered failover within one authenticated request. The final
+free router selects from available free models automatically; it does not enforce
+the five-model preference itself. The app does not retry the list locally or fall
+back to a paid model. Availability, rate limits, and output quality can vary.
+The order is an initial engineering preference, not a measured quality ranking.
+See the [routing decision](docs/adr/0004-prioritized-free-model-routing.md),
+[OpenRouter fallbacks](https://openrouter.ai/docs/guides/routing/model-fallbacks),
+and [free router](https://openrouter.ai/docs/guides/routing/routers/free-router).
+
+Configuration remains temperature 0.2, 2048 maximum output tokens, and a 60-second
+timeout using non-streaming OpenRouter chat completions.
+Enhancement rewrites the request rather than carrying it out,
 preserves stated constraints and unresolved references, and adds only essential
 task details. Simple requests stay short; structure follows complexity, without
 mandatory headings or added length limits. Instructions live in the provider-neutral
-`EnhancementPolicy`; model and HTTP configuration remain in `OpenRouterProvider`
+`EnhancementPolicy`; routing and HTTP configuration remain in `OpenRouterProvider`
 and `App.xaml.cs`. The token ceiling is a transport limit, not a requested output length.
 
-Ticket 06 evaluated ten non-sensitive examples through the actual editor and
-Enhance action with a configured account. GPT-4.1 preserved intent in all ten
+Historically, ticket 06 evaluated ten non-sensitive examples through the actual
+editor and Enhance action with a configured account. GPT-4.1 preserved intent in all ten
 observed results, with 1.45-2.44 seconds end-to-end latency (1.68-second median)
 and $0.00854 total API-reported usage cost. GPT-4.1 Mini was cheaper but altered
 background facts and quoted text in the comparison run. This small sample does
-not guarantee future outputs. See the [evaluation and limitations](.scratch/prompt-enhancer/enhancement-evaluation.md)
+not establish the quality of the current free models or guarantee future outputs.
+See the [evaluation and limitations](.scratch/prompt-enhancer/enhancement-evaluation.md)
 and [model decision](docs/adr/0002-intent-preserving-enhancement-model.md).
 
 The desktop receives an `IEnhancementProvider` and an `ICredentialStore` through
@@ -155,9 +177,10 @@ To repeat the fixed ten-example evaluation with numeric token/cost telemetry:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\evaluate.ps1 -Live
 ```
 
-This manual command opens the real editor and makes ten paid requests using the
-saved credential. It prints the fixed examples, results, latency, and numeric
-usage metadata to the console; it does not write a prompt history or change the
+This manual command opens the real editor and makes ten live requests through
+the current free-model routing using the saved credential. It prints the fixed
+examples, results, latency, and numeric usage metadata to the console; it does not
+write a prompt history or change the
 credential or clipboard. It refuses to run without `-Live`. Leave the evaluation
 editor alone while it runs. Missing usage metadata is reported as null or omitted,
 not as zero cost. No credential is supplied by the project, and automated

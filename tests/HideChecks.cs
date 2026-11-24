@@ -11,7 +11,7 @@ public partial class App
         var previousEditor = editor;
         var transport = new ControlledHttp { ExpectedKey = credentials.Load() };
         using var client = new HttpClient(transport);
-        editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+        editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
         previousEditor?.Close();
         var launcher = new LauncherWindow();
         bool quit = false, editorDestroyed = false, launcherDestroyed = false;

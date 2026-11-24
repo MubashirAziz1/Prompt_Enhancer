@@ -13,7 +13,7 @@ namespace PromptEnhancer.Tests
     {
         public static void Register(List<KeyValuePair<string, Action>> tests)
         {
-            tests.Add(new KeyValuePair<string, Action>("OpenRouter sends authenticated policy and exact rough prompt", AuthenticatedRequest));
+            tests.Add(new KeyValuePair<string, Action>("OpenRouter sends prioritized free models with authenticated policy and exact rough prompt", AuthenticatedRequest));
             tests.Add(new KeyValuePair<string, Action>("OpenRouter authentication failure never exposes key or remote diagnostics", () =>
                 SafeFailure(HttpStatusCode.Unauthorized, "{\"error\":{\"message\":\"" + TestRunner.TestKey + " DO-NOT-RENDER-REMOTE-DETAILS\"}}")));
             tests.Add(new KeyValuePair<string, Action>("OpenRouter rate limit never exposes remote diagnostics", () =>
@@ -43,7 +43,7 @@ namespace PromptEnhancer.Tests
                 {
                     try
                     {
-                        new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel)
+                        new OpenRouterProvider(client, credentials)
                             .EnhanceAsync(TestRunner.RoughPrompt, EnhancementPolicy.Instructions, CancellationToken.None).GetAwaiter().GetResult();
                         throw new Exception("The invalid cloud response must fail rather than becoming an enhanced prompt.");
                     }
@@ -74,7 +74,9 @@ namespace PromptEnhancer.Tests
                         request.Headers.Authorization.Parameter == TestRunner.TestKey, "Authenticate using the saved key.");
                     TestRunner.Require(request.Content.Headers.ContentType.MediaType == "application/json", "Send JSON content.");
                     using var document = JsonDocument.Parse(await request.Content.ReadAsStringAsync()); var body = document.RootElement;
-                    TestRunner.Require(body.GetProperty("model").GetString() == "openai/gpt-4.1" && !body.GetProperty("stream").GetBoolean(), "Use the selected model without streaming.");
+                    TestRunner.Require(TestRunner.HasPrioritizedFreeModels(body),
+                        "Send the five documented free models in priority order, then the automatic free router, without a single-model override.");
+                    TestRunner.Require(!body.GetProperty("stream").GetBoolean(), "Use non-streaming completions.");
                     var messages = body.GetProperty("messages");
                     TestRunner.Require(messages.GetArrayLength() == 2, "Send only the policy and submitted prompt, without history.");
                     var system = messages[0];
@@ -88,7 +90,7 @@ namespace PromptEnhancer.Tests
                 } })
                 using (var client = new HttpClient(transport))
                 {
-                    string result = new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel)
+                    string result = new OpenRouterProvider(client, credentials)
                         .EnhanceAsync(prompt, policy, CancellationToken.None).GetAwaiter().GetResult();
                     TestRunner.Require(result == "Compare these two laptops for programming.", "Return the cloud's enhanced prompt.");
                 }

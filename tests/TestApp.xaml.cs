@@ -81,7 +81,7 @@ public partial class App : Application
             if (!reuse) await Probe("write", path, "non-sensitive-fixture-key");
             var transport = new ControlledHttp { ExpectedKey = reuse ? "replacement-fixture-key" : "non-sensitive-fixture-key" };
             using var client = new HttpClient(transport) { Timeout = TimeSpan.FromSeconds(60) };
-            editor = new EditorWindow(new OpenRouterProvider(client, credentials, OpenRouterProvider.InitialModel), credentials);
+            editor = new EditorWindow(new OpenRouterProvider(client, credentials), credentials);
             editor.Activate();
             await Task.Delay(400);
             Find<TextBox>("RoughPrompt").Text = "write a short email";
@@ -92,7 +92,7 @@ public partial class App : Application
             if (!reuse)
             {
                 Require(await ClipboardFixture.Text() == ClipboardFixture.Sentinel, "Launching and enhancing must not change the clipboard.");
-                checks.Add("PASS Legacy protected key loads and enhances in WinUI with exact HTTP configuration");
+                checks.Add("PASS Legacy protected key loads and enhances in WinUI with prioritized free routing and exact HTTP configuration");
                 if (only == "All" || only == "Settings")
                 {
                     Invoke("Settings");
@@ -205,7 +205,7 @@ internal sealed class ControlledHttp : HttpMessageHandler
         if (request.RequestUri.AbsoluteUri != "https://openrouter.ai/api/v1/chat/completions" ||
             request.Method != HttpMethod.Post || request.Headers.Authorization?.Scheme != "Bearer" ||
             request.Headers.Authorization.Parameter != ExpectedKey ||
-            body.GetProperty("model").GetString() != "openai/gpt-4.1" ||
+            !PromptEnhancer.Tests.TestRunner.HasPrioritizedFreeModels(body) ||
             body.GetProperty("temperature").GetDouble() != 0.2 ||
             body.GetProperty("max_tokens").GetInt32() != 2048 || body.GetProperty("stream").GetBoolean() ||
             body.GetProperty("messages").GetArrayLength() != 2 ||
@@ -213,7 +213,7 @@ internal sealed class ControlledHttp : HttpMessageHandler
             body.GetProperty("messages")[0].GetProperty("content").GetString() != EnhancementPolicy.Instructions ||
             body.GetProperty("messages")[1].GetProperty("role").GetString() != "user" ||
             body.GetProperty("messages")[1].GetProperty("content").GetString() != ExpectedPrompt)
-            throw new Exception("The HTTP request must preserve the exact current prompt, complete policy, authentication, and evaluated settings.");
+            throw new Exception("The HTTP request must preserve the exact current prompt, complete policy, authentication, prioritized free routing, and transport settings.");
         return await Respond(cancellationToken);
     }
 

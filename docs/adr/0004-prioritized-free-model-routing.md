@@ -1,0 +1,43 @@
+# Route enhancement through prioritized free models
+
+Date: 2026-11-24
+Status: Accepted; TDD seams confirmed by the user on 2026-11-24
+
+The user requests free OpenRouter routing with five backend priorities instead
+of a single selected model. This supersedes ADR 0002's paid GPT-4.1 selection;
+the provider-neutral enhancement policy and existing provider boundary remain.
+
+OpenRouter's `openrouter/free` selects randomly, so it cannot enforce a preferred
+order. Use the chat-completions API's `models` array to try these candidates in
+order, with `openrouter/free` as the final automatic fallback:
+
+1. `google/gemma-4-31b-it:free`
+2. `inclusionai/ling-3.2-flash:free`
+3. `baidu/ernie-5.5-flash-preview:free`
+4. `nvidia/nemotron-3.5-lightning:free`
+5. `google/gemma-4-26b-a4b-it:free`
+6. `openrouter/free`
+
+The first preference is an instruction-tuned general model, followed by Flash
+alternatives from different organizations, a lightweight NVIDIA model, and a
+smaller Gemma option. This is an initial engineering preference for general
+rewriting and availability diversity, not a measured quality or latency ranking.
+All five explicit IDs were listed with zero prompt and completion prices and
+text output in the public model catalog on this date.
+
+The backend owns the entire order; callers no longer select a model. Every
+entry is a free variant or the free router. OpenRouter performs model failover
+within one authenticated request; the application does not replay prompts in a
+local retry loop. Keep non-streaming responses, temperature 0.2, the 2048-token
+output limit, 60-second timeout, and safe response/error handling.
+
+Availability, free-tier limits, and model quality vary. ADR 0002's ten-example
+GPT-4.1 evaluation remains historical evidence and does not establish the quality
+of these replacements. Controlled HTTP and editor workflow tests verify the
+application's request contract and behavior, not OpenRouter's internal fallback
+engine or live semantic quality.
+
+Sources: [model fallbacks](https://openrouter.ai/docs/guides/routing/model-fallbacks),
+[free router](https://openrouter.ai/docs/guides/routing/routers/free-router),
+[chat completions](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion),
+[current catalog](https://openrouter.ai/api/v1/models).
