@@ -18,8 +18,8 @@ public sealed class FloatingExperience : IDisposable
         this.editor = editor;
         this.launcher = launcher;
         this.onQuit = onQuit;
-        // Editor Hide returns to the floating button; launcher/tray Hide hides both.
-        editor.HideRequested += Collapse;
+        // Closing the editor returns to the floating button; launcher/tray Hide hides both.
+        editor.CollapseRequested += Collapse;
         editor.QuitRequested += Quit;
         launcher.OpenRequested += OpenEditor;
         launcher.HideRequested += Hide;

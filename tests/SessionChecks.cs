@@ -55,6 +55,8 @@ public partial class App
             Require(editor.AppWindow.Position.X < origin.X - 40, "Native title-bar dragging must move the prompt editor.");
             Find<TextBox>("RoughPrompt").Text = "Retain this rough prompt.";
             Find<TextBox>("EnhancedPrompt").Text = "Retain my result edits.";
+            Invoke("Clear");
+            Invoke("UndoSession");
             var result = Find<TextBox>("EnhancedPrompt");
             origin = editor.AppWindow.Position;
             // Client coordinates include the native title bar; use ClientToScreen for a real text drag.
@@ -88,12 +90,12 @@ public partial class App
             experience.OpenEditor();
             await Until(() => editor.AppWindow.IsVisible);
             checks.Add("PASS Native launcher context menu Hide removes both windows and retains the session");
-            await InvokeSession("Hide");
+            Invoke("Collapse");
             await Task.Delay(100);
             Require(!editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible,
-                "Editor Hide must return to the floating button without quitting or hiding the launcher.");
+                "Closing the editor must return to the floating button without quitting or hiding the launcher.");
             Require(Find<TextBox>("RoughPrompt").Text == "Retain this rough prompt." && result.Text == "Retain my result edits.",
-                "Editor Hide must retain the rough prompt and reviewed result.");
+                "Closing the editor must retain the rough prompt and reviewed result.");
             await TrayCommand("hide", trayName);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
             await TrayCommand("restore", trayName);
@@ -101,7 +103,9 @@ public partial class App
             await NativeDesktop.Stroke(launcher, NativeDesktop.Center(launcher), new PointInt32());
             await Until(() => editor.AppWindow.IsVisible);
             Require(result.Text == "Retain my result edits.", "The real tray menu must restore the retained session.");
-            await InvokeSession("Hide");
+            Require(Find<Button>("UndoSession").IsEnabled && (string)Find<Button>("UndoSession").Content == "Redo",
+                "Hide and Restore must retain the same session recovery pair and direction.");
+            Invoke("Collapse");
             await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
             await TrayCommand("hide", trayName);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
@@ -119,9 +123,11 @@ public partial class App
             Invoke("Enhance");
             await Until(() => !Find<Button>("Enhance").IsEnabled);
             await OpenSessionMenu();
-            Require(!Find<Button>("Clear").IsEnabled && Find<Button>("Hide").IsEnabled && Find<Button>("Quit").IsEnabled,
-                "Hide and Quit must remain available during enhancement; Clear must wait until idle.");
-            await InvokeSession("Hide");
+            Require(!Find<Button>("Clear").IsEnabled && Find<Button>("Collapse").IsEnabled && Find<Button>("Quit").IsEnabled,
+                "Close and Quit must remain available during enhancement; Clear must wait until idle.");
+            NativeDesktop.Press(editor, 0x1B); // Dismiss the menu before using the editor's close control.
+            await Until(() => !Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Quit"));
+            Invoke("Collapse");
             await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
             await TrayCommand("hide", trayName);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
@@ -133,7 +139,7 @@ public partial class App
             experience.OpenEditor();
             await Until(() => editor.AppWindow.IsVisible);
             Require(result.Text == "Available when restored.", "Restoration must expose a completion received while hidden.");
-            checks.Add("PASS Hide remains available during enhancement; tray-hidden completion stays hidden and is retained");
+            checks.Add("PASS Close remains available during enhancement; tray-hidden completion stays hidden and is retained");
 
             bool canceled = false;
             pending = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -167,9 +173,11 @@ public partial class App
 
     private async Task OpenSessionMenu()
     {
-        if (Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Hide")) return;
+        if (Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Quit")) return;
         Invoke("SessionMenu");
-        await Until(() => Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Hide"));
+        await Until(() => Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Quit"));
+        Require(!Elements().OfType<Button>().Any(button => AutomationProperties.GetAutomationId(button) == "Hide"),
+            "The editor session menu must not contain the redundant Hide action.");
     }
 
     private async Task InvokeSession(string command)
@@ -210,17 +218,23 @@ public partial class App
 
     private async Task ClearWorkflow(ControlledHttp transport)
     {
+        string savedRough = Find<TextBox>("RoughPrompt").Text;
         Find<TextBox>("EnhancedPrompt").Text = "Reviewed result.";
         Invoke("Clear");
         Require(Find<TextBox>("RoughPrompt").Text == "" && Find<TextBox>("EnhancedPrompt").Text == "" && !Find<Button>("Copy").IsEnabled,
             "Clear must empty both current prompts and disable Copy.");
+        Invoke("UndoSession");
+        Require(Find<TextBox>("RoughPrompt").Text == savedRough && Find<TextBox>("EnhancedPrompt").Text == "Reviewed result." && Find<Button>("Copy").IsEnabled,
+            "Undo New must restore both prompts, including result edits.");
+        Invoke("UndoSession");
+        Require(Find<TextBox>("RoughPrompt").Text == "" && Find<TextBox>("EnhancedPrompt").Text == "", "Redo New must restore the empty session.");
         transport.ExpectedPrompt = "start a fresh task";
         Find<TextBox>("RoughPrompt").Text = transport.ExpectedPrompt;
         transport.Respond = _ => Task.FromResult(ControlledHttp.Completion("Start a fresh task."));
         Invoke("Enhance");
         await Until(() => Find<Button>("Enhance").IsEnabled);
         Require(Find<TextBox>("EnhancedPrompt").Text == "Start a fresh task.", "Clear must retain the saved key for a fresh enhancement.");
-        checks.Add("PASS Clear discards both prompts and permits fresh enhancement with the protected key");
+        checks.Add("PASS New, Undo and Redo preserve both prompts and permit fresh enhancement with the protected key");
         transport.ExpectedPrompt = "write a short email";
         transport.Respond = _ => Task.FromResult(ControlledHttp.Completion("Write a short email."));
     }

@@ -23,5 +23,5 @@ The small movable on-screen entry point used to open the prompt editor.
 The workspace where the user enters a rough prompt, requests enhancement, and reviews or edits the enhanced prompt before copying it.
 
 **Current prompt session**:
-The rough prompt and enhanced prompt the user is currently working with, retained when the editor is closed, minimized, or hidden and discarded by Clear or Quit.
+The rough prompt and enhanced prompt the user is currently working with, retained when the editor is closed, minimized, or hidden. New starts an empty session with one in-memory Undo/Redo pair; Quit discards both the current prompts and that recovery pair.
 

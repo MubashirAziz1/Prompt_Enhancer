@@ -34,12 +34,20 @@ public partial class App
             .Single(b => AutomationProperties.GetAutomationId(b) == "OpenEditor");
         ((IInvokeProvider)new ButtonAutomationPeer(open).GetPattern(PatternInterface.Invoke)).Invoke();
         await Until(() => ((FrameworkElement)editor.Content).ActualHeight > 0);
-        Require(Find<TextBox>("RoughPrompt").Text == "" && Find<TextBox>("EnhancedPrompt").Text == "" && !Find<Button>("Copy").IsEnabled,
-            "Relaunch must discard both prompts and result edits.");
+        Require(Find<TextBox>("RoughPrompt").Text == "" && Find<TextBox>("EnhancedPrompt").Text == "" && !Find<Button>("Copy").IsEnabled &&
+            Find<Button>("UndoSession").Visibility == Visibility.Collapsed && !Find<Button>("UndoSession").IsEnabled,
+            "Relaunch must discard both prompts, result edits and Undo/Redo recovery.");
         Find<TextBox>("RoughPrompt").Text = "write a short email";
         Invoke("Enhance");
         await Until(() => Find<Button>("Enhance").IsEnabled);
         Require(Find<TextBox>("EnhancedPrompt").Text == "Write a short email.", "A fresh floating process must reuse the protected key.");
+        Find<TextBox>("EnhancedPrompt").Text = "Reviewed result before Quit.";
+        Invoke("Clear");
+        Require(Find<Button>("UndoSession").Visibility == Visibility.Visible && Find<Button>("UndoSession").IsEnabled,
+            "Each exiting process must first establish recovery so the next launch checks its absence.");
+        Invoke("UndoSession");
+        Require(Find<TextBox>("EnhancedPrompt").Text == "Reviewed result before Quit." && (string)Find<Button>("UndoSession").Content == "Redo",
+            "The exiting session must contain both reviewed work and a recoverable alternate.");
         if (mode == "pending-quit")
         {
             transport.Respond = async cancellation =>
@@ -61,7 +69,7 @@ public partial class App
         }
         else
         {
-            await InvokeSession("Hide");
+            Invoke("Collapse");
             await Until(() => !editor.AppWindow.IsVisible && launcher.AppWindow.IsVisible);
             await TrayCommand("hide", launcher.Title);
             await Until(() => !editor.AppWindow.IsVisible && !launcher.AppWindow.IsVisible);
@@ -89,7 +97,7 @@ public partial class App
                 await TrayCommand("absent", "Prompt Enhancer fresh " + process.Id);
             }
             finally { if (!process.HasExited) { process.Kill(); await process.WaitForExitAsync(); } }
-            checks.Add("PASS Fresh process " + mode + ": empty session, protected-key reuse, complete exit and notification-icon removal");
+            checks.Add("PASS Fresh process " + mode + ": no prompts or recovery after relaunch, protected-key reuse, recovery before Quit, complete exit and notification-icon removal");
         }
     }
 }

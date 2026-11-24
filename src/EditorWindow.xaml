@@ -36,8 +36,7 @@
             </Style>
                 <Flyout x:Name="SessionFlyout" Placement="BottomEdgeAlignedLeft">
                     <StackPanel Spacing="4" MinWidth="170" RequestedTheme="Dark">
-                        <Button Content="Hide" Click="Hide" TabIndex="8" HorizontalAlignment="Stretch" Style="{StaticResource QuietButton}"
-                                AutomationProperties.AutomationId="Hide" />
+                        <TextBlock Text="Closing the editor keeps your prompts. Quit discards them." TextWrapping="Wrap" MaxWidth="220" Margin="10,4" FontSize="12" Foreground="{StaticResource MutedBrush}" />
                         <Button Content="Quit" Click="Quit" TabIndex="9" HorizontalAlignment="Stretch" Style="{StaticResource QuietButton}"
                                 AutomationProperties.AutomationId="Quit" />
                     </StackPanel>
@@ -55,14 +54,12 @@
                 <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                 <Grid ColumnSpacing="6">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="32" /><ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="52" /><ColumnDefinition Width="32" />
                         <ColumnDefinition Width="*" /><ColumnDefinition Width="32" /><ColumnDefinition Width="32" />
                     </Grid.ColumnDefinitions>
-                    <Button x:Name="ClearButton" Style="{StaticResource ToolbarButton}" Click="Clear" TabIndex="6"
-                            AutomationProperties.AutomationId="Clear" AutomationProperties.Name="Clear prompts"
-                            ToolTipService.ToolTip="Clear prompts" VerticalAlignment="Center">
-                        <FontIcon Glyph="&#xE710;" FontSize="13" />
-                    </Button>
+                    <Button x:Name="ClearButton" Content="New" Style="{StaticResource ToolbarButton}" Width="52" Click="Clear" TabIndex="6"
+                            AutomationProperties.AutomationId="Clear" AutomationProperties.Name="New prompt"
+                            ToolTipService.ToolTip="Start a new prompt. Undo restores your current prompts." VerticalAlignment="Center" />
                     <Button Grid.Column="1" Style="{StaticResource ToolbarButton}" Click="OpenSessionMenu" TabIndex="7"
                             AutomationProperties.AutomationId="SessionMenu" AutomationProperties.Name="Session menu"
                             ToolTipService.ToolTip="Session menu" VerticalAlignment="Center">
@@ -83,25 +80,29 @@
                         <FontIcon Glyph="&#xE8BB;" FontSize="12" />
                     </Button>
                 </Grid>
-                <ScrollViewer x:Name="Viewport" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                    <Border Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="12,10,12,10" Height="{Binding ActualHeight, ElementName=Viewport}" MinHeight="410">
+                    <Border Grid.Row="1" Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="12,10,12,10">
                         <Grid RowSpacing="8">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="132" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="144" />
                                 <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Grid>
+                            <Grid ColumnSpacing="4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <Path Data="M8,0 L10,6 L16,8 L10,10 L8,16 L6,10 L0,8 L6,6 Z" Fill="#C6BDDF" Width="14" Height="14" Stretch="Uniform" />
-                                    <TextBlock Text="Enhanced prompt" FontFamily="Segoe UI Variable Text" FontSize="13" FontWeight="SemiBold" Foreground="#F3F2F7" />
+                                    <TextBlock x:Name="ResultTitle" AutomationProperties.AutomationId="ResultTitle" Text="Enhanced prompt" FontFamily="Segoe UI Variable Text" FontSize="13" FontWeight="SemiBold" Foreground="#F3F2F7" />
                                 </StackPanel>
-                                <Button x:Name="CopyButton" Content="Copy" Click="Copy" TabIndex="5" HorizontalAlignment="Right"
+                                <Button x:Name="UndoButton" Grid.Column="1" Content="Undo" Click="UndoSession" TabIndex="6" Visibility="Collapsed"
+                                        Style="{StaticResource QuietButton}" AutomationProperties.AutomationId="UndoSession"
+                                        ToolTipService.ToolTip="Restore the prompts from before New or the last replacement." />
+                                <Button x:Name="CopyButton" Grid.Column="2" Content="Copy" Click="Copy" TabIndex="5" HorizontalAlignment="Right"
                                         Style="{StaticResource QuietButton}" IsEnabled="False"
                                         AutomationProperties.AutomationId="Copy" AutomationProperties.Name="Copy enhanced prompt" />
                             </Grid>
-                            <TextBox x:Name="EnhancedPrompt" Grid.Row="1" Style="{StaticResource PromptField}" AcceptsReturn="True"
-                                     PlaceholderText="Your clearer prompt will appear here. Review and edit it before you copy."
-                                     TextWrapping="Wrap" MaxLength="32000" TabIndex="4" TextChanging="ResultChanging"
+                            <Grid Grid.Row="1">
+                            <TextBox x:Name="EnhancedPrompt" Style="{StaticResource PromptField}" AcceptsReturn="True"
+                                     PlaceholderText=""
+                                     TextWrapping="Wrap" MaxLength="32000" TabIndex="4" TextChanging="ResultChanging" GotFocus="ResultFocusChanged" LostFocus="ResultFocusChanged"
                                      AutomationProperties.AutomationId="EnhancedPrompt" AutomationProperties.Name="Enhanced prompt"
                                      ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <TextBox.Resources>
@@ -109,11 +110,22 @@
                                     <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#20212D" />
                                 </TextBox.Resources>
                             </TextBox>
+                            <ScrollViewer x:Name="EmptyState" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Spacing="8" Padding="4,8">
+                                    <TextBlock Text="A clearer prompt starts here." FontSize="14" Foreground="#F3F2F7" TextWrapping="Wrap" />
+                                    <TextBlock Text="Try: write email boss tomorrow leave" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                                    <TextBlock Text="Becomes: Write an email to my boss requesting leave tomorrow." FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                                    <Button x:Name="SetupButton" Content="Set up API key" Click="OpenSettings" TabIndex="0" HorizontalAlignment="Left"
+                                            Style="{StaticResource QuietButton}" Background="#18FFFFFF" AutomationProperties.AutomationId="SetupKey" />
+                                </StackPanel>
+                            </ScrollViewer>
+                            </Grid>
                             <Border Grid.Row="2" Background="{StaticResource ComposerBrush}" BorderBrush="#55494960" BorderThickness="1" CornerRadius="16" Padding="10,8,8,7">
                                 <Grid RowSpacing="4">
-                                    <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="32" /></Grid.RowDefinitions>
-                                    <TextBox x:Name="RoughPrompt" Style="{StaticResource PromptField}" AcceptsReturn="True"
-                                             PlaceholderText="Write your rough prompt…" TextWrapping="Wrap" MaxLength="32000" TabIndex="1"
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="32" /></Grid.RowDefinitions>
+                                    <TextBlock Text="Rough prompt" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                                    <TextBox x:Name="RoughPrompt" Grid.Row="1" Style="{StaticResource PromptField}" AcceptsReturn="True"
+                                             PlaceholderText="Write your rough prompt…" TextWrapping="Wrap" MaxLength="32000" TabIndex="1" TextChanging="RoughChanging"
                                              AutomationProperties.AutomationId="RoughPrompt" AutomationProperties.Name="Rough prompt"
                                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <TextBox.Resources>
@@ -121,7 +133,7 @@
                                             <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#17181E" />
                                         </TextBox.Resources>
                                     </TextBox>
-                                    <Grid Grid.Row="1">
+                                    <Grid Grid.Row="2">
                                         <Button x:Name="PasteButton" Content="Paste" Click="Paste" TabIndex="2" Style="{StaticResource QuietButton}"
                                                 AutomationProperties.AutomationId="Paste" ToolTipService.ToolTip="Paste into rough prompt" />
                                         <Button x:Name="EnhanceButton" Content="Enhance" Click="Enhance" HorizontalAlignment="Right" TabIndex="3"
@@ -130,17 +142,18 @@
                                     </Grid>
                                 </Grid>
                             </Border>
-                            <StackPanel Grid.Row="3" Spacing="4">
+                            <ScrollViewer Grid.Row="3" MaxHeight="64" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Spacing="4">
                                 <ProgressBar x:Name="Progress" IsIndeterminate="True" Visibility="Collapsed" Height="2"
                                              AutomationProperties.Name="Enhancing" AutomationProperties.AutomationId="Progress" />
                                 <TextBlock x:Name="Status" Text="Add your API key in Settings to begin." FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
                                            AutomationProperties.AutomationId="Status" AutomationProperties.LiveSetting="Polite" />
                             </StackPanel>
+                            </ScrollViewer>
                             <TextBlock Grid.Row="4" Text="Enhance sends your prompt to the cloud. Usage charges may apply."
                                        TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource MutedBrush}" />
                         </Grid>
                     </Border>
-                </ScrollViewer>
 
             </Grid>
         </Border>

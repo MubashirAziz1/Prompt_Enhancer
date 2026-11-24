@@ -1,7 +1,12 @@
-param([ValidateSet('All', 'Settings', 'Workflow', 'Recovery', 'Appearance', 'Session', 'Hide', 'OpenRouter')][string]$Only = 'All', [switch]$Published)
+param([ValidateSet('All', 'CurrentPromptSession', 'FreshProcess', 'Settings', 'Workflow', 'Recovery', 'Appearance', 'Session', 'Hide', 'OpenRouter')][string]$Only = 'All', [switch]$Published)
 $ErrorActionPreference = 'Stop'
-& (Join-Path $PSScriptRoot 'build.ps1') -Tests -Publish:$Published
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if ($Only -in @('All', 'CurrentPromptSession')) {
+    & (Join-Path $env:ProgramW6432 'dotnet/dotnet.exe') run --project (Join-Path $projectRoot 'tests/CurrentPromptSession/PromptEnhancer.Session.Tests.csproj') --configuration Release
+    if ($LASTEXITCODE -ne 0) { throw 'Current prompt session checks failed.' }
+    if ($Only -eq 'CurrentPromptSession') { return }
+}
+& (Join-Path $PSScriptRoot 'build.ps1') -Tests -Publish:$Published
 $directory = Join-Path $projectRoot 'build\winui-tests\x64\Release\net10.0-windows10.0.26100.0\win-x64'
 if ($Published) { $directory = Join-Path $projectRoot 'build\publish-tests\win-x64' }
 $report = Join-Path $directory 'checks.txt'

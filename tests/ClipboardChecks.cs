@@ -29,6 +29,7 @@ public partial class App
         var response = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
         transport.Respond = cancellation => response.Task.WaitAsync(cancellation);
         int previous = transport.Requests;
+        result.Text = "Keep these reviewed edits while waiting.";
         Invoke("Enhance");
         // A rapid second invocation may be queued before the first event, or rejected
         // by the native peer after it disables. Either way only one request is allowed.
@@ -37,8 +38,8 @@ public partial class App
         await Until(() => transport.Requests > previous);
         Require(transport.Requests == previous + 1 && !Find<Button>("Enhance").IsEnabled &&
             !Find<Button>("Settings").IsEnabled && !Find<Button>("Paste").IsEnabled && !rough.IsEnabled && !result.IsEnabled &&
-            !Find<Button>("Copy").IsEnabled && result.Text == "" && Find<ProgressBar>("Progress").Visibility == Visibility.Visible,
-            "Pending enhancement must prevent duplicates/conflicts, remove stale results, and show progress.");
+            !Find<Button>("Copy").IsEnabled && result.Text == "Keep these reviewed edits while waiting." && Find<ProgressBar>("Progress").Visibility == Visibility.Visible,
+            "Pending enhancement must prevent duplicates/conflicts, retain reviewed results, and show progress.");
         Require(await ClipboardFixture.Text() == pasted, "Typing and enhancement must not change the clipboard.");
         response.SetResult(ControlledHttp.Completion("Compare these two laptops for programming."));
         await Until(() => Find<Button>("Enhance").IsEnabled);

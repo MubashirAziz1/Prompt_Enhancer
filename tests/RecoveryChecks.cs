@@ -65,12 +65,13 @@ public partial class App
             var rough = Find<TextBox>("RoughPrompt");
             var result = Find<TextBox>("EnhancedPrompt");
             rough.Text = transport.ExpectedPrompt;
-            result.Text = "Stale result that must disappear.";
+            result.Text = "Reviewed result that must survive.";
             Invoke("Enhance");
             await Until(() => Find<Button>("Enhance").IsEnabled && Find<TextBlock>("Status").Text.StartsWith("Enhancement failed."));
             string feedback = Find<TextBlock>("Status").Text;
-            Require(rough.Text == "Keep this draft after failure." && result.Text == "" && !Find<Button>("Copy").IsEnabled &&
-                (string)Find<Button>("Enhance").Content == "Retry", scenario.Name + ": failure must retain the draft and forbid copying an error.");
+            Require(rough.Text == "Keep this draft after failure." && result.Text == "Reviewed result that must survive." && Find<Button>("Copy").IsEnabled &&
+                (string)Find<Button>("Enhance").Content == "Retry" && Find<TextBlock>("ResultTitle").Text == "Previous result",
+                scenario.Name + ": failure must retain both prompts, label the previous result, and permit copying it.");
             Require(feedback.Contains(scenario.Guidance) && !feedback.Contains("REMOTE") && !feedback.Contains(FixtureKey) &&
                 !feedback.Contains(rough.Text), scenario.Name + ": feedback must be safe and explain recovery.");
             if (scenario.CorrectKey)
@@ -89,6 +90,13 @@ public partial class App
             transport.Respond = _ => Task.FromResult(ControlledHttp.Completion("Compare these two laptops for programming."));
             Invoke("Enhance"); // The same native action now labelled Retry.
             await Until(() => Find<Button>("Enhance").IsEnabled && result.Text == "Compare these two laptops for programming.");
+            Invoke("UndoSession");
+            Require(result.Text == "Reviewed result that must survive." && rough.Text == revised &&
+                (string)Find<Button>("Enhance").Content == "Retry" && Find<TextBlock>("ResultTitle").Text == "Previous result" && Find<Button>("Copy").IsEnabled,
+                "Undo replacement must restore reviewed edits, the submitted draft, Retry and Previous result semantics.");
+            Invoke("UndoSession");
+            Require(result.Text == "Compare these two laptops for programming." && Find<TextBlock>("ResultTitle").Text == "Enhanced prompt",
+                "Redo must restore the new result and current-result semantics.");
             Require(rough.Text == revised && (string)Find<Button>("Enhance").Content == "Enhance", "Retry must use current input and restore the normal action.");
             result.Text = "Recovered and edited result.";
             await CopyResult();

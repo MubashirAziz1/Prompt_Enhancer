@@ -45,7 +45,7 @@ public partial class App : Application
             {
                 var hideCredentials = new DpapiCredentialStore(Path.Combine(directory, "key.dpapi"));
                 hideCredentials.Save("non-sensitive-fixture-key");
-                await EditorHideWorkflow(hideCredentials);
+                await EditorCloseWorkflow(hideCredentials);
                 File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
                 Directory.Delete(directory, true);
                 Environment.Exit(0);
@@ -124,10 +124,11 @@ public partial class App : Application
                 }
                 if (only == "All" || only == "Session")
                 {
-                    await EditorHideWorkflow(credentials);
+                    await EditorCloseWorkflow(credentials);
                     await FloatingSession(credentials);
                     await FreshFloatingProcesses(path);
                 }
+                if (only == "FreshProcess") await FreshFloatingProcesses(path);
                 File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "checks.txt"), checks);
             }
         }

@@ -11,5 +11,8 @@
                    TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <TextBlock x:Name="CredentialStatus" Text="No key saved yet." TextWrapping="Wrap"
                    AutomationProperties.AutomationId="CredentialStatus" AutomationProperties.LiveSetting="Polite" />
+        <HyperlinkButton Content="Get an API key on OpenRouter" NavigateUri="https://openrouter.ai/settings/keys"
+                         HorizontalAlignment="Left" Padding="0,4" Foreground="#C6BDDF" TabIndex="10"
+                         AutomationProperties.AutomationId="KeyHelp" ToolTipService.ToolTip="Opens OpenRouter in your browser" />
     </StackPanel>
 </ContentDialog>

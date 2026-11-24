@@ -27,9 +27,10 @@ Both current prompts, including result edits, survive closing or minimizing.
 The dark floating editor opens at **420 × 530 logical pixels**, matching the
 compact reference proportions. Windows scales it for your display DPI. Review
 and edit the enhanced prompt above the bottom rough-prompt composer; use the
-toolbar **+** to clear both prompts. Resize the window for more room; smaller
-windows scroll to keep the controls available.
-Select **Hide** in the editor's **…** menu to return to the small floating button,
+toolbar **New** to start fresh, then **Undo** to restore both prompts if needed.
+Resize the window for more room; prompt text scrolls within each editor while
+the result header, Copy, and bottom composer stay available.
+Select the editor's top-right **×** to return to the small floating button,
 keeping both current prompts. Right-click the floating button and choose
 **Hide** to remove both floating windows. To restore, right-click the
 **Prompt Enhancer** notification icon in the Windows system tray and choose
@@ -37,15 +38,19 @@ keeping both current prompts. Right-click the floating button and choose
 if Windows places it in the tray overflow. Click the restored button to reopen
 the same prompts.
 
-Use **+ (Clear prompts)** when enhancement is idle to empty both prompts and begin a fresh
-task. Select **Quit** in the editor's **…** menu or the button/tray menu to exit and discard
-session contents. Alt+F4 on the floating button also exits. Hide and Quit remain
-available during enhancement; editor Hide leaves the floating button visible,
-and completed work stays in the editor until you reopen it,
-and Quit cancels pending work. Relaunch starts with empty prompts. Clear and Quit
+Use **New** when enhancement is idle to empty both prompts and begin a fresh
+task. **Undo** restores the previous prompts, including result edits; **Redo**
+brings back the prompts you just left. Recovery holds one prior pair in memory.
+Select **Quit** in the editor's **…** menu or the button/tray menu to exit and discard
+session contents. Alt+F4 on the floating button also exits. Close and Quit remain
+available during enhancement; closing the editor leaves the floating button visible,
+and completed work stays in the editor until you reopen it.
+Quit cancels pending work. Relaunch starts with empty prompts. Clear and Quit
 keep your protected API key available for the next enhancement/session.
 
-Open **Settings**, enter your OpenRouter API key, and select **Save**. Type or
+Select **Set up API key** in the empty state or open **Settings**, enter your
+OpenRouter API key, and select **Save**. Settings includes a link to OpenRouter's
+key page, which opens in your browser. Type or
 paste a rough prompt (using **Paste** or Ctrl+V), then select **Enhance**. Review
 and edit the enhanced prompt, then select **Copy** to put the current edited
 result on the clipboard for pasting into another application. Copy is available
@@ -55,8 +60,10 @@ and relaunching under the same Windows account. Saving a new key replaces it.
 The key field stays blank when reopened; blank Save/Cancel keeps the saved key.
 
 If enhancement fails, the rough prompt stays in the editor and the action becomes
-**Retry**. Failure feedback appears in the status area; the result stays empty
-and Copy is unavailable. For missing or rejected credentials, open **Settings**
+**Retry**. Failure feedback appears in the status area. An existing result stays
+visible as **Previous result** and can be copied once the request finishes; a
+first attempt with no prior result leaves Copy unavailable. Successful replacement
+offers **Undo** to restore the prior result. For missing or rejected credentials, open **Settings**
 and save a corrected key. For a timeout, connectivity problem, or provider error,
 recover the connection/account or wait before retrying. You can edit the rough
 prompt first: **Retry** sends its current text using the current saved key.
@@ -85,12 +92,20 @@ Run all checks, or one confirmed test boundary:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only CurrentPromptSession
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only FreshProcess
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Workflow
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only OpenRouter
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check.ps1 -Only Recovery
 ```
 
-Checks use the real WinUI controls and real DPAPI storage, with controlled
+The current prompt session owns prompt edits, New, one Undo/Redo pair,
+Enhance/Retry, retained results and terminal cancellation in `src/CurrentPromptSession.cs`.
+Its workflow checks run without windows, clipboard, credential storage or network
+access, using the same concrete module as the editor and controlled enhancement
+providers. The full check command runs these before the desktop suite.
+
+Desktop checks use the real WinUI controls and real DPAPI storage, with controlled
 HTTP responses and a non-sensitive test credential. A fresh child process verifies
 credential reuse after relaunch. A replacement integration exercises the unchanged
 desktop with the baseline enhancement policy. HTTP checks cover the exact submitted
