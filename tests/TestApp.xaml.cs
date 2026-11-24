@@ -205,7 +205,7 @@ internal sealed class ControlledHttp : HttpMessageHandler
         if (request.RequestUri.AbsoluteUri != "https://openrouter.ai/api/v1/chat/completions" ||
             request.Method != HttpMethod.Post || request.Headers.Authorization?.Scheme != "Bearer" ||
             request.Headers.Authorization.Parameter != ExpectedKey ||
-            !PromptEnhancer.Tests.TestRunner.HasPrioritizedFreeModels(body) ||
+            (!PromptEnhancer.Tests.TestRunner.HasFirstFreeModelGroup(body) && !PromptEnhancer.Tests.TestRunner.HasFinalFreeModelGroup(body)) ||
             body.GetProperty("temperature").GetDouble() != 0.2 ||
             body.GetProperty("max_tokens").GetInt32() != 2048 || body.GetProperty("stream").GetBoolean() ||
             body.GetProperty("messages").GetArrayLength() != 2 ||

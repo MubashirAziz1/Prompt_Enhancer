@@ -20,6 +20,9 @@ failures remain safe; documentation describes the current routing and limitation
   OpenRouter documentation/catalog. Waiting for required test-seam confirmation.
 - 2026-11-24: The user confirmed the recommended HTTP and editor workflow seams
   and review against the starting HEAD, excluding existing uncommitted UI edits.
+- 2026-11-24: A subsequent live failure exposed OpenRouter's three-item array
+  limit. [Ticket 02](02-respect-model-list-limit.md) corrects the original
+  single-request implementation while preserving all six priorities.
 
 ## Answer
 

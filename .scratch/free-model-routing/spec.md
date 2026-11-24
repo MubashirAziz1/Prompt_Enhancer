@@ -14,7 +14,13 @@ Initial order, checked against OpenRouter's public catalog on 2026-11-24:
 5. `google/gemma-4-26b-a4b-it:free`
 6. `openrouter/free` (automatic free-model fallback)
 
-Use OpenRouter's ordered `models` request parameter. Keep authentication, exact
+Use OpenRouter's ordered `models` request parameter in two groups of three: the
+first three preferences, then the remaining two preferences plus `openrouter/free`.
+This corrects a live HTTP 400 caused by the service's three-item array limit.
+Advance only on HTTP 404, 408, 422, 429, or 5xx; stop for authentication, credits,
+other request errors, network failures, invalid completions, and cancellation.
+The client's timeout budget covers the entire enhancement, including both groups.
+Keep authentication, exact
 rough prompt, provider-neutral enhancement policy, response validation, timeout,
 and safe application errors. The provider owns the order; callers cannot select
 a single paid model. Availability and semantic quality remain outside controlled

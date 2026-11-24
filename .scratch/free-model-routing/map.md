@@ -18,6 +18,13 @@
   provider owns all six ordered free candidates, and callers cannot select a paid
   model. HTTP, Workflow, and Recovery checks pass; see
   [ADR 0004](../../docs/adr/0004-prioritized-free-model-routing.md).
+- [Live-request correction](issues/02-respect-model-list-limit.md): the original
+  six-item array is rejected with HTTP 400. The same saved-key request succeeds
+  with three candidates. Preserve all priorities in two groups of three, with
+  one shared timeout budget and fallback only for routing/capacity/server errors.
+  The correction is complete: 20 HTTP checks and 17 Recovery scenarios pass,
+  both reviews have no remaining findings, and the original saved-key live
+  reproduction now returns HTTP 200 with a valid enhanced prompt.
 
 ## Fog
 
@@ -26,3 +33,5 @@
   to the expected physical point; a Session rerun also hit foreground activation
   failure. The full desktop suite is not green. This routing change does not
   modify the native tray input code.
+- After the live-request correction, the full suite passes feature checks but
+  still exits during native tray automation (`Shell element unavailable: Hide`).

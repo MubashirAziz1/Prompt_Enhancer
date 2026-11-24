@@ -3,6 +3,13 @@
 Date: 2026-11-24
 Status: Accepted; TDD seams confirmed by the user on 2026-11-24
 
+Live-request correction, 2026-11-24: OpenRouter rejected the original six-item
+`models` array with HTTP 400 and a three-item validation limit. Changing only
+the candidate list to the first three returned HTTP 200 and a valid enhanced
+prompt using the same saved credential. This supersedes the original decision
+to send all six candidates in one HTTP request. Controlled tests did not model
+the service's array-length validation and therefore missed this incompatibility.
+
 The user requests free OpenRouter routing with five backend priorities instead
 of a single selected model. This supersedes ADR 0002's paid GPT-4.1 selection;
 the provider-neutral enhancement policy and existing provider boundary remain.
@@ -26,10 +33,15 @@ All five explicit IDs were listed with zero prompt and completion prices and
 text output in the public model catalog on this date.
 
 The backend owns the entire order; callers no longer select a model. Every
-entry is a free variant or the free router. OpenRouter performs model failover
-within one authenticated request; the application does not replay prompts in a
-local retry loop. Keep non-streaming responses, temperature 0.2, the 2048-token
-output limit, 60-second timeout, and safe response/error handling.
+entry is a free variant or the free router. Send the first three preferences in
+one authenticated request. If it fails with a routing, capacity, or server error
+(HTTP 404, 408, 422, 429, or 5xx), send the remaining three candidates in a second
+request. OpenRouter handles failover within each group. Stop for authentication,
+credits, other request errors, network failures, invalid completions, or
+cancellation. At most two HTTP requests share the client's timeout budget
+(60 seconds in production). Keep non-streaming responses, temperature 0.2,
+the 2048-token output limit, and safe response/error handling. Each request can
+consume the account's free-tier quota.
 
 Availability, free-tier limits, and model quality vary. ADR 0002's ten-example
 GPT-4.1 evaluation remains historical evidence and does not establish the quality

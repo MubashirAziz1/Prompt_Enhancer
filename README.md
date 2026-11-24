@@ -135,10 +135,15 @@ parameter, with no model selector in the editor:
 5. `google/gemma-4-26b-a4b-it:free`
 6. `openrouter/free` (automatic free-model fallback)
 
-OpenRouter handles ordered failover within one authenticated request. The final
-free router selects from available free models automatically; it does not enforce
-the five-model preference itself. The app does not retry the list locally or fall
-back to a paid model. Availability, rate limits, and output quality can vary.
+OpenRouter accepts at most three candidates per request. The app sends the first
+three preferences together. On a routing, capacity, or server error (HTTP 404,
+408, 422, 429, or 5xx), it sends the remaining two preferences and the free router
+in a second request. Both share the 60-second timeout budget. Authentication,
+credit, other request errors, network failures, and invalid completions stop the
+operation. OpenRouter handles ordered failover within each group. The final free
+router selects from available free models automatically; it does not enforce the
+five-model preference itself. No paid model is selected. Each request can consume
+free-tier quota. Availability, rate limits, and output quality can vary.
 The order is an initial engineering preference, not a measured quality ranking.
 See the [routing decision](docs/adr/0004-prioritized-free-model-routing.md),
 [OpenRouter fallbacks](https://openrouter.ai/docs/guides/routing/model-fallbacks),
@@ -177,8 +182,9 @@ To repeat the fixed ten-example evaluation with numeric token/cost telemetry:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\evaluate.ps1 -Live
 ```
 
-This manual command opens the real editor and makes ten live requests through
-the current free-model routing using the saved credential. It prints the fixed
+This manual command opens the real editor and makes ten live enhancements through
+the current free-model routing using the saved credential (up to two HTTP requests
+per enhancement). It prints the fixed
 examples, results, latency, and numeric usage metadata to the console; it does not
 write a prompt history or change the
 credential or clipboard. It refuses to run without `-Live`. Leave the evaluation
