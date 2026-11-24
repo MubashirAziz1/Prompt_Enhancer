@@ -2,6 +2,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
 
@@ -30,6 +31,7 @@ public sealed class FloatingButton : Button
         origin = DragWindow.Position;
         dragged = false;
         pressed = CapturePointer(args.Pointer);
+        if (pressed) VisualStateManager.GoToState(this, "Pressed", false);
         args.Handled = true;
     }
 
@@ -66,6 +68,7 @@ public sealed class FloatingButton : Button
         pressed = false;
         rightPressed = false;
         ReleasePointerCapture(args.Pointer);
+        VisualStateManager.GoToState(this, IsPointerOver ? "PointerOver" : "Normal", false);
         args.Handled = true;
         if (activate) Activated?.Invoke();
     }
@@ -75,6 +78,7 @@ public sealed class FloatingButton : Button
         pressed = false;
         rightPressed = false;
         base.OnPointerCaptureLost(args);
+        VisualStateManager.GoToState(this, IsPointerOver ? "PointerOver" : "Normal", false);
     }
 
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out PointInt32 point);

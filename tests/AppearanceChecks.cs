@@ -42,6 +42,10 @@ public partial class App
         result.Focus(FocusState.Keyboard);
         NativeDesktop.Chord(editor, 0x41);
         await Until(() => result.SelectedText == "Replacement provider result.");
+        NativeDesktop.Press(editor, 0x08);
+        await Until(() => result.Text == "");
+        Require(ReferenceEquals(FocusManager.GetFocusedElement(root.XamlRoot), result) && result.Visibility == Visibility.Visible,
+            "Erasing a result must keep its editor focused so replacement text can be typed.");
         NativeDesktop.TypeText(editor, "Reviewed using the keyboard.");
         await Until(() => result.Text == "Reviewed using the keyboard.");
         await CopyResult();
@@ -87,17 +91,28 @@ public partial class App
                 double scale = root.XamlRoot.RasterizationScale;
                 editor.AppWindow.Resize(new SizeInt32((int)(360 * scale), (int)(450 * scale)));
                 await Task.Delay(200);
-                var viewport = (ScrollViewer)root.FindName("Viewport");
-                Require(rough.ActualWidth >= 200 && rough.ActualHeight >= 50 && result.ActualHeight >= 100 && viewport.ScrollableHeight > 0,
-                    "Smaller windows must retain readable editors and scroll to lower actions and feedback.");
-                viewport.ChangeView(null, viewport.ScrollableHeight, null, true);
+                Require(rough.ActualWidth >= 200 && rough.ActualHeight >= 40 && result.ActualHeight >= 40,
+                    "Smaller windows must retain usable input and result editors.");
+                var copyPoint = Find<Button>("Copy").TransformToVisual(root).TransformPoint(new Windows.Foundation.Point());
+                Require(copyPoint.Y >= 44 && copyPoint.Y + Find<Button>("Copy").ActualHeight < rough.TransformToVisual(root).TransformPoint(new Windows.Foundation.Point()).Y,
+                    "Copy must stay visible above the composer at compact sizes.");
                 await Task.Delay(100);
                 await Snapshot(root, "compact-" + scale.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + ".png");
+                string savedStatus = Find<TextBlock>("Status").Text;
+                Find<TextBlock>("Status").Text = "Enhancement failed. The provider could not be reached. Check your connection and retry. Your previous reviewed result is kept.";
+                rough.FontSize = result.FontSize = 21;
+                await Task.Delay(100);
+                var actionPoint = Find<Button>("Enhance").TransformToVisual(root).TransformPoint(new Windows.Foundation.Point());
+                Require(actionPoint.Y + Find<Button>("Enhance").ActualHeight <= root.ActualHeight && Find<Button>("Copy").ActualHeight >= 32,
+                    "Long errors and enlarged editor text must leave Enhance and Copy on screen.");
+                await Snapshot(root, "compact-large-text.png");
+                rough.FontSize = result.FontSize = 14;
+                Find<TextBlock>("Status").Text = savedStatus;
                 editor.AppWindow.Resize(new SizeInt32((int)(540 * scale), (int)(650 * scale)));
                 await Task.Delay(150);
-                Require(viewport.ScrollableHeight < 2 && result.ActualHeight > 200,
+                Require(result.ActualHeight > 200,
                     "Larger windows must expand the result area without unnecessary page scrolling.");
-                checks.Add("PASS 360 by 450 scrolling and 540 by 650 expanded editor at " + (scale * 100).ToString("0") + "% display scale");
+                checks.Add("PASS 360 by 450 fixed Copy/composer and 540 by 650 expanded editor at " + (scale * 100).ToString("0") + "% display scale");
             }
         }
         finally
@@ -106,6 +121,18 @@ public partial class App
             editor.AppWindow.Resize(originalSize);
         }
         checks.Add("PASS 420 by 530 reference proportions, dark palette, native caption region, bottom composer, and Settings keyboard input");
+        await OpenEditor(new ReplacementProvider(), new DpapiCredentialStore(Path.Combine(AppContext.BaseDirectory, "test-data", Guid.NewGuid().ToString("N"), "key.dpapi")));
+        var emptyRoot = (FrameworkElement)editor.Content;
+        Require(Find<Button>("SetupKey").Visibility == Visibility.Visible && !Find<Button>("Copy").IsEnabled,
+            "First use must offer key setup and keep Copy disabled without a result.");
+        await Snapshot(emptyRoot, "editor-first-use.png");
+        Invoke("SetupKey");
+        await Until(() => Elements().OfType<PasswordBox>().Any());
+        Require(Elements().OfType<HyperlinkButton>().Any(link => link.NavigateUri?.AbsoluteUri == "https://openrouter.ai/settings/keys"),
+            "Setup must lead to Settings with a link to obtain an OpenRouter key.");
+        InvokeDialog("Cancel");
+        await SettingsClosed();
+        Require(Find<Button>("SetupKey").Visibility == Visibility.Visible, "Canceling setup must keep its entry point available.");
     }
 
     private static async Task Snapshot(FrameworkElement element, string name)

@@ -9,6 +9,16 @@ namespace PromptEnhancer.WinUI.Tests;
 
 internal static class NativeDesktop
 {
+    public static void AssertCircularLauncher(Window window)
+    {
+        nint handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        var origin = window.AppWindow.Position;
+        var size = window.AppWindow.Size;
+        if (Math.Abs(size.Width - size.Height) > 1 || GetAncestor(WindowFromPoint(Center(window)), 2) != handle ||
+            GetAncestor(WindowFromPoint(new PointInt32(origin.X + 1, origin.Y + 1)), 2) == handle)
+            throw new Exception("The spherical launcher must accept center clicks and leave its outside corners click-through.");
+    }
+
     public static void Close(Microsoft.UI.Xaml.Window window) =>
         PostMessage(WinRT.Interop.WindowNative.GetWindowHandle(window), 0x10, 0, 0);
     [DllImport("user32.dll")] private static extern bool PostMessage(nint window, uint message, nint wParam, nint lParam);

@@ -2,9 +2,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:PromptEnhancer.WinUI" Title="Prompt Enhancer">
-    <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid x:Name="Root" Background="#B59ADB">
         <local:FloatingButton x:Name="OpenButton" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                Style="{StaticResource AccentButtonStyle}" Padding="6"
+                Padding="0" UseSystemFocusVisuals="False"
                 AutomationProperties.AutomationId="OpenEditor" AutomationProperties.Name="Open prompt editor"
                 ToolTipService.ToolTip="Open prompt editor. Drag to move. Right-click for Hide and Quit.">
             <Button.ContextFlyout>
@@ -13,10 +13,40 @@
                     <MenuFlyoutItem Text="Quit" Click="Quit" AutomationProperties.AutomationId="Quit" />
                 </MenuFlyout>
             </Button.ContextFlyout>
-            <StackPanel HorizontalAlignment="Center">
-                <TextBlock Text="Prompt" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                <TextBlock Text="Enhancer" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" />
-            </StackPanel>
+            <Button.Template>
+                <ControlTemplate TargetType="local:FloatingButton">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters><Setter Target="Hover.Opacity" Value="0.12" /></VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters><Setter Target="Shade.Opacity" Value="0.15" /></VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters><Setter Target="Shade.Opacity" Value="0.4" /></VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Unfocused" />
+                                <VisualState x:Name="PointerFocused" />
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters><Setter Target="FocusRing.Opacity" Value="1" /></VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Image Source="ms-appx:///Assets/pearl-sphere.svg" Stretch="Fill" IsHitTestVisible="False" />
+                        <Ellipse x:Name="Hover" Fill="White" Opacity="0" IsHitTestVisible="False" />
+                        <Ellipse x:Name="Shade" Fill="#392657" Opacity="0" IsHitTestVisible="False" />
+                        <Grid x:Name="FocusRing" Opacity="0" IsHitTestVisible="False">
+                            <Ellipse Margin="4" Stroke="White" StrokeThickness="4" />
+                            <Ellipse Margin="4" Stroke="#483365" StrokeThickness="2" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Button.Template>
         </local:FloatingButton>
     </Grid>
 </Window>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="body" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop stop-color="#ffedcf"/>
+      <stop offset="0.32" stop-color="#f5a6bd"/>
+      <stop offset="0.57" stop-color="#b59adb"/>
+      <stop offset="0.85" stop-color="#b9e3ed"/>
+      <stop offset="1" stop-color="#7361ad"/>
+    </linearGradient>
+    <radialGradient id="rose" cx="0.15" cy="0.4" r="0.65">
+      <stop stop-color="#ff7fa5" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ff7fa5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pearl" cx="0.42" cy="0.16" r="0.48">
+      <stop stop-color="#fffbe4"/>
+      <stop offset="0.4" stop-color="#fff5e4" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#fff5e4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shine">
+      <stop stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.4" stop-color="#f7fcff" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#eefaff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rim" cx="0.5" cy="0.48" r="0.52">
+      <stop offset="0.84" stop-color="#b9e3ed" stop-opacity="0"/>
+      <stop offset="0.94" stop-color="#cceeff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#7361ad" stop-opacity="0.8"/>
+    </radialGradient>
+  </defs>
+  <circle cx="128" cy="128" r="128" fill="url(#body)"/>
+  <circle cx="128" cy="128" r="128" fill="url(#rose)"/>
+  <circle cx="128" cy="128" r="128" fill="url(#pearl)"/>
+  <ellipse cx="196" cy="78" rx="33" ry="57" transform="rotate(-32 196 78)" fill="url(#shine)"/>
+  <ellipse cx="48" cy="180" rx="26" ry="58" transform="rotate(-28 48 180)" fill="url(#shine)" opacity="0.35"/>
+  <circle cx="128" cy="128" r="127.5" fill="url(#rim)" stroke="#aa92ce" stroke-width="1"/>
+</svg>

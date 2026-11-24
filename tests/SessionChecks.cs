@@ -31,11 +31,17 @@ public partial class App
             launcherRoot.RequestedTheme = theme;
             await Until(() => launcherRoot.ActualTheme == theme);
             await Task.Delay(100);
-            Require(launcherRoot.ActualWidth is >= 80 and <= 90 && launcherRoot.ActualHeight is >= 60 and <= 70,
-                "The floating button must retain usable logical dimensions at the actual display scale.");
             await Snapshot(launcherRoot, "floating-" + theme + ".png");
+            Require(Math.Abs(launcherRoot.ActualWidth - 80) <= 1 && Math.Abs(launcherRoot.ActualHeight - 80) <= 1,
+                $"The floating button must retain usable logical dimensions at the actual display scale. Actual={launcherRoot.ActualWidth}x{launcherRoot.ActualHeight}; window={launcher.AppWindow.Size.Width}x{launcher.AppWindow.Size.Height}; scale={launcherRoot.XamlRoot.RasterizationScale}");
         }
         launcherRoot.RequestedTheme = ElementTheme.Default;
+        NativeDesktop.AssertCircularLauncher(launcher);
+        var sphereButton = Descendants(launcherRoot).OfType<FloatingButton>().Single();
+        sphereButton.Focus(FocusState.Keyboard);
+        await Task.Delay(100);
+        await Snapshot(launcherRoot, "floating-focus.png");
+        sphereButton.Focus(FocusState.Pointer);
         checks.Add("PASS Light/dark floating button rendering at " + (launcherRoot.XamlRoot.RasterizationScale * 100).ToString("0") + "% display scale");
         using var companion = Process.Start(new ProcessStartInfo(DesktopProbePath()) { Arguments = "companion", UseShellExecute = false, CreateNoWindow = true });
         try
